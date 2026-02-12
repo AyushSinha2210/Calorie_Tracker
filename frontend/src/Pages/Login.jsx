@@ -2,7 +2,6 @@ import { useState } from "react";
 import { signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
 import { auth, googleProvider, db } from "../firebase";
 import { useNavigate, Link } from "react-router-dom";
-import "./Auth.css";
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 
 
@@ -66,14 +65,14 @@ function Login() {
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-card">
+    <div>
+      <div>
         <h2>Login</h2>
 
         <form onSubmit={handleLogin}>
-          {error && <div className="error-message">{error}</div>}
+          {error && <div>{error}</div>}
           
-          <div className="form-group">
+          <div>
             <label htmlFor="email">Email</label>
             <input
               type="email"
@@ -85,7 +84,7 @@ function Login() {
             />
           </div>
 
-          <div className="form-group">
+          <div>
             <label htmlFor="password">Password</label>
             <input
               type="password"
@@ -97,18 +96,18 @@ function Login() {
             />
           </div>
 
-          <button type="submit" disabled={loading} className="auth-button">
+          <button type="submit" disabled={loading}>
             {loading ? "Logging in..." : "Login"}
           </button>
         </form>
 
-        <div style={{ margin: "20px 0", textAlign: "center", color: "#999" }}>OR</div>
+        <div>OR</div>
 
-        <button onClick={handleGoogleLogin} disabled={loading} className="auth-button" style={{ background: "#4285f4" }}>
+        <button onClick={handleGoogleLogin} disabled={loading}>
           {loading ? "Logging in..." : "Login with Google"}
         </button>
 
-        <p className="auth-link">
+        <p>
           Don't have an account? <Link to="/register">Register here</Link>
         </p>
       </div>

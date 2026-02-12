@@ -2,7 +2,6 @@ import { useState } from "react";
 import { createUserWithEmailAndPassword, signInWithPopup } from "firebase/auth";
 import { auth, googleProvider, db } from "../firebase";
 import { useNavigate, Link } from "react-router-dom";
-import "./Auth.css";
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 
 function Register() {
@@ -75,14 +74,14 @@ function Register() {
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-card">
+    <div>
+      <div>
         <h2>Create Account</h2>
 
         <form onSubmit={handleRegister}>
-          {error && <div className="error-message">{error}</div>}
+          {error && <div>{error}</div>}
           
-          <div className="form-group">
+          <div>
             <label htmlFor="email">Email</label>
             <input
               type="email"
@@ -94,7 +93,7 @@ function Register() {
             />
           </div>
 
-          <div className="form-group">
+          <div>
             <label htmlFor="password">Password</label>
             <input
               type="password"
@@ -106,7 +105,7 @@ function Register() {
             />
           </div>
 
-          <div className="form-group">
+          <div>
             <label htmlFor="confirmPassword">Confirm Password</label>
             <input
               type="password"
@@ -118,18 +117,18 @@ function Register() {
             />
           </div>
 
-          <button type="submit" disabled={loading} className="auth-button">
+          <button type="submit" disabled={loading}>
             {loading ? "Creating Account..." : "Register"}
           </button>
         </form>
 
-        <div style={{ margin: "20px 0", textAlign: "center", color: "#999" }}>OR</div>
+        <div>OR</div>
 
-        <button onClick={handleGoogleSignUp} disabled={loading} className="auth-button" style={{ background: "#4285f4" }}>
+        <button onClick={handleGoogleSignUp} disabled={loading}>
           {loading ? "Signing up..." : "Sign up with Google"}
         </button>
 
-        <p className="auth-link">
+        <p>
           Already have an account? <Link to="/login">Login here</Link>
         </p>
       </div>
