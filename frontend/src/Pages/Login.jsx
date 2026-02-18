@@ -4,7 +4,6 @@ import { auth, googleProvider, db } from "../firebase";
 import { useNavigate, Link } from "react-router-dom";
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 
-
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -12,106 +11,45 @@ function Login() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  const saveUserToDB = async (user) => {
+    const ref = doc(db, "users", user.uid);
+    const snap = await getDoc(ref);
+    await setDoc(ref, snap.exists() ? { lastLogin: serverTimestamp() } : { name: user.displayName, email: user.email, photo: user.photoURL, createdAt: serverTimestamp() }, { merge: true });
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
-    
+    setLoading(true);
     try {
-      setLoading(true);
-      const result = await signInWithEmailAndPassword(auth, email, password);
-      await saveUserToDB(result.user);
+      await saveUserToDB((await signInWithEmailAndPassword(auth, email, password)).user);
       navigate("/dashboard");
-    } catch (err) {
-      console.error("Login error:", err);
-      setError("Invalid email or password. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const saveUserToDB = async (user) => {
-    const userRef = doc(db, "users", user.uid);
-    const userSnap = await getDoc(userRef);
-
-    if (userSnap.exists()) {
-      await setDoc(
-        userRef,
-        { lastLogin: serverTimestamp() },
-        { merge: true }
-      );
-    } else {
-      await setDoc(userRef, {
-        name: user.displayName,
-        email: user.email,
-        photo: user.photoURL,
-        createdAt: serverTimestamp(),
-      });
-    }
+    } catch { setError("Invalid email or password."); }
+    finally { setLoading(false); }
   };
 
   const handleGoogleLogin = async () => {
-    setError("");
-    setLoading(true);
+    setError(""); setLoading(true);
     try {
-      const result = await signInWithPopup(auth, googleProvider);
-      await saveUserToDB(result.user);
+      await saveUserToDB((await signInWithPopup(auth, googleProvider)).user);
       navigate("/dashboard");
-    } catch (err) {
-      console.error("Google login error:", err);
-      setError(err.message || "Failed to login with Google. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+    } catch (e) { setError(e.message || "Google login failed."); }
+    finally { setLoading(false); }
   };
 
   return (
-    <div>
-      <div>
-        <h2>Login</h2>
-
-        <form onSubmit={handleLogin}>
-          {error && <div>{error}</div>}
-          
-          <div>
-            <label htmlFor="email">Email</label>
-            <input
-              type="email"
-              id="email"
-              placeholder="Enter your email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-
-          <div>
-            <label htmlFor="password">Password</label>
-            <input
-              type="password"
-              id="password"
-              placeholder="Enter your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-
-          <button type="submit" disabled={loading}>
-            {loading ? "Logging in..." : "Login"}
-          </button>
-        </form>
-
-        <div>OR</div>
-
-        <button onClick={handleGoogleLogin} disabled={loading}>
-          {loading ? "Logging in..." : "Login with Google"}
-        </button>
-
-        <p>
-          Don't have an account? <Link to="/register">Register here</Link>
-        </p>
-      </div>
-    </div>
+    <div><div>
+      <h2>Login</h2>
+      <form onSubmit={handleLogin}>
+        {error && <div>{error}</div>}
+        <div><label htmlFor="email">Email</label><input type="email" id="email" placeholder="Enter your email" value={email} onChange={(e) => setEmail(e.target.value)} required /></div>
+        <div><label htmlFor="password">Password</label><input type="password" id="password" placeholder="Enter your password" value={password} onChange={(e) => setPassword(e.target.value)} required /></div>
+        <button type="submit" disabled={loading}>{loading ? "Logging in..." : "Login"}</button>
+      </form>
+      <div>OR</div>
+      <button onClick={handleGoogleLogin} disabled={loading}>{loading ? "Logging in..." : "Login with Google"}</button>
+      <p>Don't have an account? <Link to="/register">Register here</Link></p>
+    </div></div>
   );
 }
 
