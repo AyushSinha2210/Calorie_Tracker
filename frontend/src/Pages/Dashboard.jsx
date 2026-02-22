@@ -4,6 +4,9 @@ import { auth, db } from "../firebase";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import FoodForm from "../components/FoodForm";
+import FoodLogEditor from "../components/FoodLogEditor";
+import NutritionChart from "../components/NutritionChart";
+import MonthlyNutritionTable from "../components/MonthlyNutritionTable";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 
 const Dashboard = () => {
@@ -11,8 +14,11 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [totalCalories, setTotalCalories] = useState(0);
   const [totalProtein, setTotalProtein] = useState(0);
+  const [chartKey, setChartKey] = useState(0);
 
   const handleLogout = async () => { try { await signOut(auth); navigate("/login"); } catch {} };
+
+  const refreshCharts = () => setChartKey((k) => k + 1);
 
   useEffect(() => {
     if (!user) return;
@@ -30,12 +36,13 @@ const Dashboard = () => {
       <button onClick={handleLogout} style={{ padding: "10px 20px", background: "#667eea", color: "white", border: "none", borderRadius: "5px", cursor: "pointer", marginBottom: "20px" }}>Logout</button>
       <FoodForm />
       <div style={{ marginTop: "30px" }}>
-        <h2>Your Fitness Journey</h2>
         <h2>Today's Summary</h2>
         <p>Calories: {totalCalories}</p>
         <p>Protein: {totalProtein} g</p>
-        <p>Calories • Protein • Workouts coming soon 🔥</p>
       </div>
+      <FoodLogEditor onDataChanged={refreshCharts} />
+      <MonthlyNutritionTable />
+      <NutritionChart key={chartKey} />
     </div>
   );
 };

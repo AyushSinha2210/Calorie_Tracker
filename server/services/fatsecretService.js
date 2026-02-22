@@ -1,5 +1,23 @@
 import { getCached, setCache } from "../utils/nutritionCache.js";
 
+// ── OAuth token cache ──
+let cachedToken = null;
+let tokenExpiresAt = 0;
+
+async function getFatSecretToken() {
+  if (cachedToken && Date.now() < tokenExpiresAt) return cachedToken;
+  const tokenRes = await fetch('https://oauth.fatsecret.com/connect/token', {
+    method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: `grant_type=client_credentials&client_id=${process.env.FATSECRET_CLIENT_ID}&client_secret=${process.env.FATSECRET_CLIENT_SECRET}`
+  });
+  const data = await tokenRes.json();
+  if (!data.access_token) throw new Error('FatSecret auth failed');
+  cachedToken = data.access_token;
+  // Expire 5 min before actual expiry (default token lasts 86400s)
+  tokenExpiresAt = Date.now() + ((data.expires_in || 86400) - 300) * 1000;
+  return cachedToken;
+}
+
 export async function lookupUSDA(foodName, grams) {
   const cacheKey = `usda:${foodName.toLowerCase()}:${grams}`;
   const cached = getCached(cacheKey);
@@ -25,12 +43,7 @@ export async function lookupFatSecret(foodName, grams) {
   const cached = getCached(cacheKey);
   if (cached) return cached;
 
-  const tokenRes = await fetch('https://oauth.fatsecret.com/connect/token', {
-    method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: `grant_type=client_credentials&client_id=${process.env.FATSECRET_CLIENT_ID}&client_secret=${process.env.FATSECRET_CLIENT_SECRET}`
-  });
-  const { access_token } = await tokenRes.json();
-  if (!access_token) throw new Error('FatSecret auth failed');
+  const access_token = await getFatSecretToken();
   const headers = { 'Authorization': `Bearer ${access_token}` };
 
   const searchData = await (await fetch(`https://platform.fatsecret.com/rest/server.api?method=foods.search&search_expression=${encodeURIComponent(foodName)}&format=json&max_results=3`, { headers })).json();
@@ -43,10 +56,10 @@ export async function lookupFatSecret(foodName, grams) {
 
   const servings = detailData.food.servings.serving;
   const servingList = Array.isArray(servings) ? servings : [servings];
-  const serving = servingList.find(s => parseFloat(s.metric_serving_amount) === 100) || servingList[0];
-  const f = grams / (parseFloat(serving.metric_serving_amount) || 100);
+  const serving = servingList.find(s => Number.parseFloat(s.metric_serving_amount) === 100) || servingList[0];
+  const f = grams / (Number.parseFloat(serving.metric_serving_amount) || 100);
 
-  const result = { name: detailData.food.food_name, grams, calories: Math.round((parseFloat(serving.calories) || 0) * f), protein: Math.round((parseFloat(serving.protein) || 0) * f * 10) / 10, source: 'fatsecret' };
+  const result = { name: detailData.food.food_name, grams, calories: Math.round((Number.parseFloat(serving.calories) || 0) * f), protein: Math.round((Number.parseFloat(serving.protein) || 0) * f * 10) / 10, source: 'fatsecret' };
   setCache(cacheKey, result);
   return result;
 }

@@ -106,6 +106,7 @@ Fitness Goal Tracker/
    ```
 
    Required variables:
+
    ```env
    GEMINI_API_KEY=your_gemini_api_key
    FATSECRET_CLIENT_ID=your_fatsecret_client_id
@@ -140,19 +141,19 @@ App runs on `http://localhost:3000`
 
 ### Food Analysis
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/analyze-food` | Analyze food text with Gemini AI |
-| POST | `/analyze-food-image` | Analyze food image (multipart/form-data) |
-| POST | `/calculate-nutrition` | Calculate nutrition via FatSecret/USDA |
-| POST | `/lookup-food` | Lookup single food nutrition |
+| Method | Endpoint               | Description                              |
+| ------ | ---------------------- | ---------------------------------------- |
+| POST   | `/analyze-food`        | Analyze food text with Gemini AI         |
+| POST   | `/analyze-food-image`  | Analyze food image (multipart/form-data) |
+| POST   | `/calculate-nutrition` | Calculate nutrition via FatSecret/USDA   |
+| POST   | `/lookup-food`         | Lookup single food nutrition             |
 
 ### Workout
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/workout/log` | Log a workout with calorie calculation |
-| GET | `/api/workout/exercises` | List available exercises with MET values |
+| Method | Endpoint                 | Description                              |
+| ------ | ------------------------ | ---------------------------------------- |
+| POST   | `/api/workout/log`       | Log a workout with calorie calculation   |
+| GET    | `/api/workout/exercises` | List available exercises with MET values |
 
 ### Example Request
 
@@ -167,7 +168,12 @@ POST /analyze-food
 {
   "items": [
     { "name": "Roti", "quantity": "2 (80g)", "calories": 248, "protein": 8 },
-    { "name": "Dal", "quantity": "1 bowl (150g)", "calories": 165, "protein": 10.5 }
+    {
+      "name": "Dal",
+      "quantity": "1 bowl (150g)",
+      "calories": 165,
+      "protein": 10.5
+    }
   ],
   "total_calories": 413,
   "total_protein": 18.5
@@ -183,6 +189,7 @@ POST /analyze-food
 **AI & Nutrition:** Google Gemini AI (multi-model cascade), FatSecret API, USDA FoodData Central
 
 **AI Model Cascade:**
+
 1. `gemini-2.5-flash` (Primary)
 2. `gemini-2.0-flash` (Fallback)
 3. `gemini-2.0-flash-lite` (Fallback)
@@ -195,7 +202,7 @@ The AI recognizes common Indian food items with standardized portions:
 
 Roti (40g), Dal (150g/bowl), Rice (200g/cup), Biryani, Curry, Paratha, Dosa, Idli, and more.
 
-Simply describe your meal naturally: *"2 roti with dal"* or *"1 plate chicken biryani"*
+Simply describe your meal naturally: _"2 roti with dal"_ or _"1 plate chicken biryani"_
 
 ## Security
 

@@ -6,6 +6,18 @@ import { useAuth } from "../context/AuthContext";
 const btn = (bg, extra = {}) => ({ padding: "10px 20px", background: bg, color: "white", border: "none", borderRadius: "5px", cursor: "pointer", ...extra });
 const inp = (extra = {}) => ({ width: "100%", padding: "10px", marginBottom: "10px", borderRadius: "5px", border: "1px solid #ddd", ...extra });
 const smallInp = (extra = {}) => ({ flex: "1", padding: "8px", borderRadius: "4px", border: "1px solid #ddd", ...extra });
+const selectStyle = (extra = {}) => ({ padding: "10px", marginBottom: "10px", borderRadius: "5px", border: "1px solid #ddd", background: "#fff", fontSize: "14px", cursor: "pointer", ...extra });
+
+const MEAL_TYPES = ["Breakfast", "Lunch", "Evening Snacks", "Dinner", "Late Night", "Others"];
+
+const detectMealType = () => {
+  const h = new Date().getHours();
+  if (h >= 6 && h < 11) return "Breakfast";
+  if (h >= 11 && h < 15) return "Lunch";
+  if (h >= 15 && h < 18) return "Evening Snacks";
+  if (h >= 18 && h < 22) return "Dinner";
+  return "Late Night";
+};
 
 const FoodForm = () => {
   const { user } = useAuth();
@@ -22,6 +34,7 @@ const FoodForm = () => {
   const [imageLoading, setImageLoading] = useState(false);
   const [confirmationData, setConfirmationData] = useState(null);
   const [lookupLoading, setLookupLoading] = useState({});
+  const [mealType, setMealType] = useState(detectMealType());
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
   const debounceTimerRef = useRef(null);
@@ -64,10 +77,15 @@ const FoodForm = () => {
       const formData = new FormData();
       formData.append("image", imageFile);
       const res = await fetch("http://localhost:5000/analyze-food-image", { method: "POST", body: formData });
-      if (!res.ok) throw new Error("Failed to analyze image");
+      if (!res.ok) {
+        const errData = await res.json().catch(() => null);
+        throw new Error(errData?.error || errData?.details || "Failed to analyze image");
+      }
       const data = await res.json();
       setConfirmationData({ type: "image", items: data.items, totals: { calories: data.total_calories, protein: data.total_protein }, needsNutritionCalculation: data.needsNutritionCalculation || false });
-    } catch { alert("Failed to analyze image. Make sure the server is running on port 5000."); }
+    } catch (err) {
+      alert(err.message || "Failed to analyze image. Make sure the server is running on port 5000.");
+    }
     finally { setImageLoading(false); }
   };
 
@@ -94,8 +112,8 @@ const FoodForm = () => {
     if (!item || !qty) return alert("Please enter food item and quantity");
     setLoading(true);
     try {
-      await addDoc(collection(db, "users", user.uid, "foodLogs"), { itemName: item, quantity: qty, calories: Number(calories) || 0, protein: Number(protein) || 0, date: new Date().toISOString().split("T")[0], createdAt: serverTimestamp() });
-      setItem(""); setQty(""); setCalories(""); setProtein("");
+      await addDoc(collection(db, "users", user.uid, "foodLogs"), { itemName: item, quantity: qty, calories: Number(calories) || 0, protein: Number(protein) || 0, mealType, date: new Date().toISOString().split("T")[0], createdAt: serverTimestamp() });
+      setItem(""); setQty(""); setCalories(""); setProtein(""); setMealType(detectMealType());
     } catch { alert("Failed to add food log"); }
     finally { setLoading(false); }
   };
@@ -105,10 +123,22 @@ const FoodForm = () => {
     setAiLoading(true);
     try {
       const res = await fetch("http://localhost:5000/analyze-food", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: aiText }) });
-      if (!res.ok) throw new Error("Failed to analyze food");
       const data = await res.json();
-      setConfirmationData({ type: "text", items: data.items, totals: { calories: data.total_calories, protein: data.total_protein } });
-    } catch { alert("Failed to analyze food. Make sure the server is running on port 5000."); }
+      if (data.note) {
+        // Server returned a note (quota issue, fallback, etc) — show it but still display any items
+        if (!data.items?.length) { alert(data.note); setAiLoading(false); return; }
+      }
+      if (!res.ok && !data.items?.length) throw new Error(data.error || data.details || "Failed to analyze food");
+      setConfirmationData({ type: "text", items: data.items || [], totals: { calories: data.total_calories || 0, protein: data.total_protein || 0 } });
+      if (data.note) alert(data.note);
+    } catch (err) {
+      const msg = err.message || "";
+      if (/fetch|network|ERR_CONNECTION/i.test(msg)) {
+        alert("Cannot connect to server. Make sure the server is running on port 5000.");
+      } else {
+        alert(msg || "Failed to analyze food. Please try again.");
+      }
+    }
     finally { setAiLoading(false); }
   };
 
@@ -117,8 +147,22 @@ const FoodForm = () => {
     setSaveLoading(true);
     try {
       const today = new Date().toISOString().split("T")[0];
-      for (const it of confirmationData.items) await addDoc(collection(db, "users", user.uid, "foodLogs"), { itemName: it.name, quantity: it.quantity, calories: it.calories, protein: it.protein, date: today, createdAt: serverTimestamp() });
-      alert(`Successfully saved ${confirmationData.items.length} food item(s)!`);
+      const items = confirmationData.items.map((it) => ({
+        name: it.name, quantity: it.quantity,
+        calories: Number(it.calories) || 0, protein: Number(it.protein) || 0,
+      }));
+      const totalCal = items.reduce((s, i) => s + i.calories, 0);
+      const totalPro = Math.round(items.reduce((s, i) => s + i.protein, 0) * 10) / 10;
+      const combinedName = items.map((i) => i.name).join(", ");
+      await addDoc(collection(db, "users", user.uid, "foodLogs"), {
+        itemName: combinedName,
+        items,
+        calories: totalCal,
+        protein: totalPro,
+        quantity: `${items.length} item${items.length !== 1 ? "s" : ""}`,
+        mealType, date: today, createdAt: serverTimestamp(),
+      });
+      alert(`Successfully saved ${items.length} food item(s) as one entry!`);
       setAiText(""); setImageFile(null); setImagePreview(null); setConfirmationData(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
       if (cameraInputRef.current) cameraInputRef.current.value = "";
@@ -169,6 +213,13 @@ const FoodForm = () => {
     <div>
       <h2>Add Food Log</h2>
       <div>
+        <hr />
+        <div style={{ marginBottom: "15px" }}>
+          <label style={{ fontWeight: "600", marginRight: "10px", color: "#333" }}>🍽️ Meal Type:</label>
+          <select value={mealType} onChange={(e) => setMealType(e.target.value)} style={selectStyle({ width: "auto", minWidth: "160px" })}>
+            {MEAL_TYPES.map((m) => <option key={m} value={m}>{m}</option>)}
+          </select>
+        </div>
         <hr />
         <h3>📸 AI Food Analysis - Upload or Camera</h3>
         <div style={{ marginBottom: "20px" }}>
