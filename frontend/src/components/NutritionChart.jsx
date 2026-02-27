@@ -1,20 +1,10 @@
-import { useState, useEffect, useMemo } from "react";
-import { collection, query, where, getDocs, deleteDoc, doc } from "firebase/firestore";
-import { db } from "../firebase";
-import { useAuth } from "../context/AuthContext";
+import { useState, useMemo } from "react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, LineChart, Line
 } from "recharts";
 
 const RETENTION_DAYS = 45;
-
-const getDateNDaysAgo = (n) => {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  d.setDate(d.getDate() - n);
-  return d;
-};
 
 const formatDate = (dateStr) => {
   const d = new Date(dateStr);
@@ -26,74 +16,33 @@ const getMonthLabel = (dateStr) => {
   return d.toLocaleDateString("en-US", { year: "numeric", month: "long" });
 };
 
-const NutritionChart = () => {
-  const { user } = useAuth();
-  const [dailyData, setDailyData] = useState([]);
-  const [loading, setLoading] = useState(true);
+const NutritionChart = ({ allLogs = [] }) => {
   const [chartType, setChartType] = useState("bar"); // "bar" or "line"
-  const [deletedCount, setDeletedCount] = useState(0);
 
-  useEffect(() => {
-    if (!user) return;
+  // Filter to last 45 days and aggregate daily calories & protein
+  const dailyData = useMemo(() => {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - RETENTION_DAYS);
+    const cutoffStr = cutoff.toISOString().split("T")[0];
 
-    const fetchAndCleanup = async () => {
-      setLoading(true);
-      try {
-        const foodLogsRef = collection(db, "users", user.uid, "foodLogs");
-        const cutoffDateStr = getDateNDaysAgo(RETENTION_DAYS).toISOString().split("T")[0];
+    const dailyMap = {};
+    for (const log of allLogs) {
+      const date = log.date;
+      if (!date || date < cutoffStr) continue;
+      if (!dailyMap[date]) dailyMap[date] = { date, calories: 0, protein: 0 };
+      dailyMap[date].calories += log.calories || 0;
+      dailyMap[date].protein += log.protein || 0;
+    }
 
-        // Only fetch docs within retention window (not ALL docs)
-        const validSnap = await getDocs(
-          query(foodLogsRef, where("date", ">=", cutoffDateStr))
-        );
-
-        // Background cleanup: delete old records (separate filtered query)
-        getDocs(query(foodLogsRef, where("date", "<", cutoffDateStr)))
-          .then((oldSnap) => {
-            let deleted = 0;
-            const deletes = [];
-            oldSnap.forEach((docSnap) => {
-              deletes.push(deleteDoc(doc(db, "users", user.uid, "foodLogs", docSnap.id)));
-              deleted++;
-            });
-            if (deleted > 0) {
-              Promise.all(deletes).then(() => setDeletedCount(deleted));
-            }
-          })
-          .catch(() => {}); // cleanup is best-effort
-
-        // Aggregate daily calories & protein
-        const dailyMap = {};
-        validSnap.forEach((docSnap) => {
-          const data = docSnap.data();
-          const date = data.date;
-          if (!date) return;
-          if (!dailyMap[date]) dailyMap[date] = { date, calories: 0, protein: 0 };
-          dailyMap[date].calories += data.calories || 0;
-          dailyMap[date].protein += data.protein || 0;
-        });
-
-        // Sort by date ascending
-        const sorted = Object.values(dailyMap).sort((a, b) => a.date.localeCompare(b.date));
-
-        // Round values
-        sorted.forEach((d) => {
-          d.calories = Math.round(d.calories);
-          d.protein = Math.round(d.protein * 10) / 10;
-          d.label = formatDate(d.date);
-          d.month = getMonthLabel(d.date);
-        });
-
-        setDailyData(sorted);
-      } catch (err) {
-        console.error("Error fetching nutrition data:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAndCleanup();
-  }, [user]);
+    const sorted = Object.values(dailyMap).sort((a, b) => a.date.localeCompare(b.date));
+    sorted.forEach((d) => {
+      d.calories = Math.round(d.calories);
+      d.protein = Math.round(d.protein * 10) / 10;
+      d.label = formatDate(d.date);
+      d.month = getMonthLabel(d.date);
+    });
+    return sorted;
+  }, [allLogs]);
 
   // Group data by month for display
   const monthlyGroups = useMemo(() => {
@@ -116,15 +65,6 @@ const NutritionChart = () => {
     const maxPro = Math.max(...dailyData.map((d) => d.protein));
     return { totalCal, totalPro, avgCal, avgPro, maxCal, maxPro, days: dailyData.length };
   }, [dailyData]);
-
-  if (loading) {
-    return (
-      <div style={styles.container}>
-        <h3 style={styles.title}>📊 Nutrition Tracking</h3>
-        <p style={{ textAlign: "center", color: "#888" }}>Loading chart data...</p>
-      </div>
-    );
-  }
 
   if (!dailyData.length) {
     return (
@@ -156,12 +96,6 @@ const NutritionChart = () => {
           </button>
         </div>
       </div>
-
-      {deletedCount > 0 && (
-        <p style={styles.cleanupNote}>
-          🔄 Auto-cleanup: {deletedCount} old record(s) removed (older than 45 days)
-        </p>
-      )}
 
       {/* Summary Stats */}
       {stats && (
@@ -320,14 +254,6 @@ const styles = {
     borderRadius: "4px",
     cursor: "pointer",
     fontSize: "13px",
-  },
-  cleanupNote: {
-    fontSize: "13px",
-    color: "#e67e22",
-    background: "#fef9e7",
-    padding: "8px 12px",
-    borderRadius: "6px",
-    marginBottom: "15px",
   },
   statsRow: {
     display: "grid",

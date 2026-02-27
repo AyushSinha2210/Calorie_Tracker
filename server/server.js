@@ -1,9 +1,12 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import { detectFoodFromImage } from "./services/geminiService.js";
-import { estimateNutritionWithGroq, analyzeNutritionFromText } from "./services/groqService.js";
+import { detectFoodFromImage, getGeminiModelStatus } from "./services/geminiService.js";
+import { estimateNutritionWithGroq, analyzeNutritionFromText, getGroqModelStatus } from "./services/groqService.js";
 import { getNutrition } from "./services/fatsecretService.js";
+import { scheduleUserCleanup, deleteInactiveUsers } from "./services/userCleanupService.js";
+import { sendOnDemandReport, scheduleEmailReports } from "./services/emailReportService.js";
+import { searchExercises, getCategories, getExerciseInfo, calculateCaloriesBurned } from "./services/workoutService.js";
 import multer from "multer";
 import { createGzip } from "zlib";
 
@@ -51,7 +54,15 @@ app.post("/analyze-food", async (req, res) => {
   }
 });
 
-app.post("/analyze-food-image", upload.single('image'), async (req, res) => {
+app.post("/analyze-food-image", (req, res, next) => {
+  upload.single('image')(req, res, (err) => {
+    if (err) {
+      if (err.code === 'LIMIT_FILE_SIZE') return res.status(413).json({ error: "File too large (max 10MB)" });
+      return res.status(400).json({ error: err.message || "Invalid file upload" });
+    }
+    next();
+  });
+}, async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: "No image file provided" });
     const detected = await detectFoodFromImage(req.file.buffer.toString('base64'), req.file.mimetype);
@@ -59,8 +70,9 @@ app.post("/analyze-food-image", upload.single('image'), async (req, res) => {
     const items = detected.items.map(i => ({ name: i.name, quantity: `${i.grams}g`, grams: i.grams, calories: 0, protein: 0 }));
     res.json({ items, total_calories: 0, total_protein: 0, needsNutritionCalculation: true });
   } catch (e) {
-    const status = e.isQuotaError ? 429 : 500;
-    res.status(status).json({ error: e.isQuotaError ? e.message : "Failed to analyze food image", details: e.message });
+    if (e.isQuotaError) return res.status(429).json({ error: e.message });
+    if (/not valid JSON|Unexpected token/i.test(e.message)) return res.json({ items: [], total_calories: 0, total_protein: 0, note: "Could not detect food items in this image. Try a clearer photo." });
+    res.status(500).json({ error: "Failed to analyze food image", details: e.message });
   }
 });
 
@@ -113,4 +125,122 @@ app.post("/lookup-food", async (req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+// ── Model RPD status endpoint ──
+// GET /model-status — shows current RPD usage for all Gemini & Groq models
+app.get("/model-status", (req, res) => {
+  res.json({
+    gemini: getGeminiModelStatus(),
+    groq: getGroqModelStatus(),
+  });
+});
+
+// ── Email report endpoints ──
+
+// POST /email-report/send — send an on-demand report right now
+app.post("/email-report/send", async (req, res) => {
+  try {
+    const { uid, email, displayName, frequency } = req.body;
+    if (!uid || !email) return res.status(400).json({ error: "uid and email are required" });
+    await sendOnDemandReport(uid, email, displayName || "", frequency || "weekly");
+    res.json({ message: `Report sent to ${email}` });
+  } catch (e) {
+    console.error("[EMAIL] On-demand send failed:", e.message);
+    res.status(500).json({ error: "Failed to send report", details: e.message });
+  }
+});
+
+// ── Workout endpoints ──
+
+// GET /workout/search?term=push+up — search wger exercises
+app.get("/workout/search", async (req, res) => {
+  try {
+    const { term } = req.query;
+    if (!term || term.trim().length < 2) return res.json([]);
+    const results = await searchExercises(term);
+    res.json(results);
+  } catch (e) {
+    console.error("[WORKOUT] Search failed:", e.message);
+    res.status(500).json({ error: "Exercise search failed", details: e.message });
+  }
+});
+
+// GET /workout/categories — list all exercise categories
+app.get("/workout/categories", async (req, res) => {
+  try {
+    const cats = await getCategories();
+    res.json(cats);
+  } catch (e) {
+    console.error("[WORKOUT] Categories failed:", e.message);
+    res.status(500).json({ error: "Failed to load categories", details: e.message });
+  }
+});
+
+// GET /workout/exercise-info/:id — get exercise details (equipment, muscles, inputType)
+app.get("/workout/exercise-info/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!id || Number.isNaN(id)) return res.status(400).json({ error: "Invalid exercise ID" });
+    const info = await getExerciseInfo(id);
+    res.json(info);
+  } catch (e) {
+    console.error("[WORKOUT] Exercise info failed:", e.message);
+    res.status(500).json({ error: "Failed to load exercise info", details: e.message });
+  }
+});
+
+// POST /workout/calculate — calculate calories burned (supports all input types)
+app.post("/workout/calculate", (req, res) => {
+  try {
+    const { exerciseName, categoryId, inputType, durationMin, sets, reps, liftedWeight, holdSeconds, weightKg } = req.body;
+    if (!exerciseName || !weightKg) {
+      return res.status(400).json({ error: "exerciseName and weightKg are required" });
+    }
+    const result = calculateCaloriesBurned({
+      exerciseName,
+      categoryId: categoryId || null,
+      inputType: inputType || "cardio",
+      durationMin: Number(durationMin) || 0,
+      sets: Number(sets) || 0,
+      reps: Number(reps) || 0,
+      liftedWeight: Number(liftedWeight) || 0,
+      holdSeconds: Number(holdSeconds) || 0,
+      weightKg: Number(weightKg),
+    });
+    res.json({ ...result, exerciseName, inputType: inputType || "cardio", weightKg });
+  } catch (e) {
+    console.error("[WORKOUT] Calc failed:", e.message);
+    res.status(500).json({ error: "Calorie calculation failed", details: e.message });
+  }
+});
+
+// Manual trigger for inactive-user cleanup (protect with a secret in production)
+app.post("/admin/cleanup-inactive-users", async (req, res) => {
+  const secret = req.headers["x-admin-secret"];
+  if (!secret || secret !== process.env.ADMIN_SECRET) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+  try {
+    const deleted = await deleteInactiveUsers();
+    res.json({ message: `Deleted ${deleted} inactive user(s).` });
+  } catch (e) {
+    res.status(500).json({ error: "Cleanup failed", details: e.message });
+  }
+});
+
+// Global error handler — catches multer & other middleware errors
+app.use((err, req, res, _next) => {
+  console.error("[SERVER ERROR]", err.message);
+  res.status(err.status || 500).json({ error: err.message || "Internal server error" });
+});
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  // Start the daily cleanup scheduler (requires Firebase service-account credentials)
+  if (process.env.FIREBASE_SERVICE_ACCOUNT || process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+    scheduleUserCleanup();
+    scheduleEmailReports();
+  } else {
+    console.log("[Cleanup] Skipped — no Firebase Admin credentials configured.");
+  }
+});

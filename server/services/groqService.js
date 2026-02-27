@@ -1,20 +1,79 @@
 import { getCached, setCache } from "../utils/nutritionCache.js";
 
-// ── Groq Models (ordered by speed/capability) ──
-// Each model has its own rate-limit pool on Groq's free tier
-const GROQ_MODELS = [
-  "llama-3.1-8b-instant",                     // fastest, lightweight
-  "llama-3.3-70b-versatile",                  // most capable
-  "meta-llama/llama-4-scout-17b-16e-instruct",// newer llama-4
-  "meta-llama/llama-4-maverick-17b-128e-instruct", // llama-4 large
-  "qwen/qwen3-32b",                           // qwen alternative
+// ── Groq Models with RPD (Requests Per Day) limits ──
+// Free-tier Groq limits vary by model. We track usage and switch proactively.
+const MODEL_CONFIG = [
+  { name: "llama-3.1-8b-instant",                          rpd: 14400 },
+  { name: "llama-3.3-70b-versatile",                       rpd: 14400 },
+  { name: "meta-llama/llama-4-scout-17b-16e-instruct",     rpd: 14400 },
+  { name: "meta-llama/llama-4-maverick-17b-128e-instruct", rpd: 14400 },
+  { name: "qwen/qwen3-32b",                                rpd: 14400 },
 ];
+
+const GROQ_MODELS = MODEL_CONFIG.map(m => m.name);
+const RPD_LIMITS = Object.fromEntries(MODEL_CONFIG.map(m => [m.name, m.rpd]));
+const RPD_THRESHOLD = 0.90; // switch model after 90% of daily quota used
 
 const cleanJson = (t) => t.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const REQUEST_TIMEOUT_MS = 10_000; // 10s hard timeout per API call
 
 const isRateLimited = (status, body) =>
   status === 429 || /rate.limit|too many|quota|resource.exhausted/i.test(body?.error?.message || "");
+
+// ── RPD (Requests Per Day) tracker ──
+const rpdTracker = {
+  date: new Date().toDateString(),
+  counts: {},
+};
+
+function getTodayKey() { return new Date().toDateString(); }
+
+function resetIfNewDay() {
+  const today = getTodayKey();
+  if (rpdTracker.date !== today) {
+    console.log(`[GROQ RPD] New day detected (${today}) — resetting all counters`);
+    rpdTracker.date = today;
+    rpdTracker.counts = {};
+    for (const key of Object.keys(modelStatus)) {
+      if (modelStatus[key].exhausted) delete modelStatus[key];
+    }
+  }
+}
+
+function recordRequest(name) {
+  resetIfNewDay();
+  rpdTracker.counts[name] = (rpdTracker.counts[name] || 0) + 1;
+}
+
+function getRpdUsage(name) {
+  resetIfNewDay();
+  return rpdTracker.counts[name] || 0;
+}
+
+function isUnderRpdLimit(name) {
+  const limit = RPD_LIMITS[name];
+  if (!limit) return true;
+  const used = getRpdUsage(name);
+  return used < Math.floor(limit * RPD_THRESHOLD);
+}
+
+/** Get RPD stats for all Groq models (used by /model-status endpoint) */
+export function getGroqModelStatus() {
+  resetIfNewDay();
+  return MODEL_CONFIG.map(({ name, rpd }) => ({
+    model: name,
+    rpdLimit: rpd,
+    rpdUsed: getRpdUsage(name),
+    rpdRemaining: Math.max(0, rpd - getRpdUsage(name)),
+    pctUsed: rpd ? Math.round((getRpdUsage(name) / rpd) * 100) : 0,
+    status: modelStatus[name]?.exhausted
+      ? "exhausted"
+      : !isUnderRpdLimit(name)
+        ? "threshold-reached"
+        : "available",
+  }));
+}
 
 // ── Persistent model health tracker ──
 const COOLDOWN_MS = 3 * 60 * 1000; // 3 minutes
@@ -22,10 +81,19 @@ const modelStatus = {};
 
 function markExhausted(name) {
   modelStatus[name] = { exhausted: true, failedAt: Date.now() };
-  console.log(`[GROQ EXHAUSTED] ${name} — skipping for ${COOLDOWN_MS / 1000}s`);
+  const used = getRpdUsage(name);
+  const limit = RPD_LIMITS[name] || '?';
+  console.log(`[GROQ EXHAUSTED] ${name} (${used}/${limit} RPD) — skipping for ${COOLDOWN_MS / 1000}s`);
 }
 
 function isAvailable(name) {
+  // Proactive RPD check
+  if (!isUnderRpdLimit(name)) {
+    const used = getRpdUsage(name);
+    const limit = RPD_LIMITS[name] || '?';
+    console.log(`[GROQ RPD SKIP] ${name} — ${used}/${limit} requests today (≥${RPD_THRESHOLD * 100}% used)`);
+    return false;
+  }
   const s = modelStatus[name];
   if (!s) return true;
   if (Date.now() - s.failedAt > COOLDOWN_MS) {
@@ -48,14 +116,30 @@ async function callGroq(model, messages, config = {}) {
     ...(config.response_format ? { response_format: config.response_format } : {}),
   };
 
-  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+  let res;
+  try {
+    res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+  } catch (e) {
+    clearTimeout(timeout);
+    if (e.name === "AbortError") throw new Error(`${model} timed out after ${REQUEST_TIMEOUT_MS / 1000}s`);
+    throw e;
+  } finally {
+    clearTimeout(timeout);
+  }
+
+  // Record against RPD counter regardless of outcome
+  recordRequest(model);
 
   const data = await res.json();
 
@@ -92,12 +176,16 @@ async function tryGroqModels(messages, config = {}) {
   // Phase 1: try each available model once
   for (const name of available) {
     try {
+      const t0 = Date.now();
       const text = await callGroq(name, messages, config);
-      console.log(`[GROQ OK] ${name}`);
+      const ms = Date.now() - t0;
+      const used = getRpdUsage(name), limit = RPD_LIMITS[name] || '?';
+      console.log(`[GROQ OK] ${name} (${ms}ms, RPD: ${used}/${limit})`);
       delete modelStatus[name];
       return text;
     } catch (e) {
       lastErr = e;
+      console.log(`[GROQ FAIL] ${name}: ${(e.message || "").substring(0, 120)}`);
       if (e.isRateLimit) {
         markExhausted(name);
         rateLimitedModels.push(name);
@@ -109,16 +197,17 @@ async function tryGroqModels(messages, config = {}) {
     }
   }
 
-  // Phase 2: retry rate-limited models with backoff
+  // Phase 2: retry rate-limited models with shorter backoffs
   if (rateLimitedModels.length) {
-    const delays = [3000, 8000, 15000];
+    const delays = [2000, 4000];
     for (let attempt = 0; attempt < delays.length; attempt++) {
       const model = rateLimitedModels[attempt % rateLimitedModels.length];
       console.log(`[GROQ RETRY ${attempt + 1}/${delays.length}] Waiting ${delays[attempt] / 1000}s, retrying ${model}...`);
       await sleep(delays[attempt]);
       try {
         const text = await callGroq(model, messages, config);
-        console.log(`[GROQ OK] ${model} (retry ${attempt + 1})`);
+        const retryUsed = getRpdUsage(model), retryLimit = RPD_LIMITS[model] || '?';
+        console.log(`[GROQ OK] ${model} (retry ${attempt + 1}, RPD: ${retryUsed}/${retryLimit})`);
         delete modelStatus[model];
         return text;
       } catch (e) {

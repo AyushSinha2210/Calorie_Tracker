@@ -1,7 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
-import { collection, query, where, onSnapshot } from "firebase/firestore";
-import { db } from "../firebase";
-import { useAuth } from "../context/AuthContext";
+import { useState, useMemo } from "react";
 
 const MEAL_TYPES = ["Breakfast", "Lunch", "Evening Snacks", "Dinner", "Late Night", "Others"];
 const MEAL_COLORS = {
@@ -31,28 +28,10 @@ const getMonthLabel = (dateStr) => {
   return d.toLocaleDateString("en-US", { month: "long", year: "numeric" });
 };
 
-const MonthlyNutritionTable = () => {
-  const { user } = useAuth();
-  const [allLogs, setAllLogs] = useState([]);
+const MonthlyNutritionTable = ({ allLogs = [] }) => {
   const [expandedDate, setExpandedDate] = useState(null);
 
   const dates = useMemo(() => getDateRange(60), []);
-  const startDate = dates[dates.length - 1]; // oldest
-
-  // Fetch all logs in the 60-day range
-  useEffect(() => {
-    if (!user) return;
-    const q = query(
-      collection(db, "users", user.uid, "foodLogs"),
-      where("date", ">=", startDate)
-    );
-    const unsub = onSnapshot(q, (snap) => {
-      const items = [];
-      snap.forEach((d) => items.push({ id: d.id, ...d.data() }));
-      setAllLogs(items);
-    });
-    return unsub;
-  }, [user, startDate]);
 
   // Group logs by date
   const logsByDate = useMemo(() => {

@@ -1,25 +1,89 @@
 import { getCached, setCache } from "../utils/nutritionCache.js";
 
-// Ordered by: newest/cheapest models first (separate quota pools), then older ones
-// Each model family has its own free-tier bucket, so we try many families
-const MODELS = [
-  "gemini-2.5-flash-lite",                   // lightweight, own quota pool
-  "gemini-3-flash-preview",                  // newest flash preview
-  "gemini-2.5-flash-lite-preview-09-2025",   // preview variant, separate pool
-  "gemini-flash-lite-latest",                // latest alias — may route differently
-  "gemini-flash-latest",                     // latest flash alias
-  "gemini-2.5-flash",                        // standard 2.5 flash
-  "gemini-2.0-flash-lite",                   // 2.0 lite
-  "gemini-2.0-flash",                        // 2.0 standard
-  "gemini-2.0-flash-001",                    // pinned 2.0
+// ── Model definitions with known RPD (Requests Per Day) limits ──
+// Free-tier Gemini: most models get ~1,500 RPD; some flash-lite get more.
+// We set a conservative threshold at 90% of the limit to switch proactively.
+// Models ordered fastest-first: 2.0 lite/flash are ~1-3s, 3.0 lite ~2-4s, 2.5/3.0 "thinking" models are slow (10-30s)
+const MODEL_CONFIG = [
+  { name: "gemini-2.0-flash-lite",                   rpd: 1500 },
+  { name: "gemini-2.0-flash",                        rpd: 1500 },
+  { name: "gemini-2.0-flash-001",                    rpd: 1500 },
+  { name: "gemini-3.0-flash-lite",                   rpd: 1500 },
+  { name: "gemini-3.0-flash",                        rpd: 500  },
+  { name: "gemini-2.5-flash",                        rpd: 500  },
 ];
+
+const MODELS = MODEL_CONFIG.map(m => m.name);
+const RPD_LIMITS = Object.fromEntries(MODEL_CONFIG.map(m => [m.name, m.rpd]));
+const RPD_THRESHOLD = 0.90; // switch model after 90 % of daily quota used
 
 const cleanJson = (t) => t.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+const REQUEST_TIMEOUT_MS = 10_000; // 10s hard timeout per API call
 
 const isQuotaOrRateLimit = (e) => /429|Too Many Requests|quota|RESOURCE_EXHAUSTED|503|overloaded/i.test(e.message || '');
 const isDailyQuotaExhausted = (e) => /limit: 0|exceeded your current quota/i.test(e.message || '');
 const isTransientRateLimit = (e) => isQuotaOrRateLimit(e) && !isDailyQuotaExhausted(e);
+
+// ── RPD (Requests Per Day) tracker ──
+// Counts successful + failed requests per model per calendar day.
+// Resets automatically when the date rolls over.
+const rpdTracker = {
+  date: new Date().toDateString(),        // current tracking day
+  counts: {},                             // { modelName: number }
+};
+
+function getTodayKey() { return new Date().toDateString(); }
+
+function resetIfNewDay() {
+  const today = getTodayKey();
+  if (rpdTracker.date !== today) {
+    console.log(`[RPD] New day detected (${today}) — resetting all counters`);
+    rpdTracker.date = today;
+    rpdTracker.counts = {};
+    // Also clear exhaustion flags since daily quotas have reset
+    for (const key of Object.keys(modelStatus)) {
+      if (modelStatus[key].exhausted) delete modelStatus[key];
+    }
+  }
+}
+
+function recordRequest(name) {
+  resetIfNewDay();
+  rpdTracker.counts[name] = (rpdTracker.counts[name] || 0) + 1;
+}
+
+function getRpdUsage(name) {
+  resetIfNewDay();
+  return rpdTracker.counts[name] || 0;
+}
+
+function isUnderRpdLimit(name) {
+  const limit = RPD_LIMITS[name];
+  if (!limit) return true; // unknown model — let it try
+  const used = getRpdUsage(name);
+  const threshold = Math.floor(limit * RPD_THRESHOLD);
+  return used < threshold;
+}
+
+/** Get RPD stats for all models (used by /model-status endpoint) */
+export function getGeminiModelStatus() {
+  resetIfNewDay();
+  return MODEL_CONFIG.map(({ name, rpd }) => ({
+    model: name,
+    rpdLimit: rpd,
+    rpdUsed: getRpdUsage(name),
+    rpdRemaining: Math.max(0, rpd - getRpdUsage(name)),
+    pctUsed: rpd ? Math.round((getRpdUsage(name) / rpd) * 100) : 0,
+    status: modelStatus[name]?.exhausted
+      ? "exhausted"
+      : !isUnderRpdLimit(name)
+        ? "threshold-reached"
+        : modelStatus[name]?.rateLimited
+          ? "rate-limited"
+          : "available",
+  }));
+}
 
 // ── Persistent model health tracker ──
 // Remembers which models are exhausted so we skip them instantly on subsequent calls.
@@ -29,7 +93,9 @@ const modelStatus = {}; // { modelName: { exhausted: boolean, rateLimited: boole
 
 function markExhausted(name) {
   modelStatus[name] = { exhausted: true, rateLimited: false, failedAt: Date.now() };
-  console.log(`[EXHAUSTED] ${name} — will skip for ${COOLDOWN_MS / 1000}s`);
+  const used = getRpdUsage(name);
+  const limit = RPD_LIMITS[name] || '?';
+  console.log(`[EXHAUSTED] ${name} (${used}/${limit} RPD) — will skip for ${COOLDOWN_MS / 1000}s`);
 }
 
 function markRateLimited(name) {
@@ -38,6 +104,13 @@ function markRateLimited(name) {
 
 function isAvailable(name) {
   const s = modelStatus[name];
+  // Check RPD threshold first — proactively skip overused models
+  if (!isUnderRpdLimit(name)) {
+    const used = getRpdUsage(name);
+    const limit = RPD_LIMITS[name] || '?';
+    console.log(`[RPD SKIP] ${name} — ${used}/${limit} requests today (≥${RPD_THRESHOLD * 100}% used), switching model`);
+    return false;
+  }
   if (!s) return true;
   // Expired — give it another chance
   if (Date.now() - s.failedAt > COOLDOWN_MS) {
@@ -48,6 +121,7 @@ function isAvailable(name) {
 }
 
 function getAvailableModels() {
+  resetIfNewDay();
   return MODELS.filter(isAvailable);
 }
 
@@ -61,10 +135,25 @@ async function callGeminiRaw(model, prompt, genConfig = {}) {
     generationConfig: { temperature: 0.1, maxOutputTokens: 512, ...genConfig },
   };
 
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-    { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }
-  );
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+  let res;
+  try {
+    res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+      { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), signal: controller.signal }
+    );
+  } catch (e) {
+    clearTimeout(timeout);
+    if (e.name === "AbortError") throw new Error(`${model} timed out after ${REQUEST_TIMEOUT_MS / 1000}s`);
+    throw e;
+  } finally {
+    clearTimeout(timeout);
+  }
+
+  // Record the request against RPD counter regardless of outcome
+  recordRequest(model);
 
   const data = await res.json();
 
@@ -99,14 +188,18 @@ async function tryModels(prompt, genConfig = {}) {
   // Phase 1: try each available model once
   for (const name of available) {
     try {
+      const t0 = Date.now();
       const text = await callGeminiRaw(name, prompt, genConfig);
-      console.log(`[OK] ${name}`);
+      const ms = Date.now() - t0;
+      const used = getRpdUsage(name), limit = RPD_LIMITS[name] || '?';
+      console.log(`[OK] ${name} (${ms}ms, RPD: ${used}/${limit})`);
       // Clear any previous bad status on success
       delete modelStatus[name];
       return text;
     } catch (e) {
       lastErr = e;
       const msg = e.message || "";
+      console.log(`[FAIL] ${name}: ${msg.substring(0, 120)}`);
 
       if (isDailyQuotaExhausted(e)) {
         markExhausted(name);
@@ -124,16 +217,17 @@ async function tryModels(prompt, genConfig = {}) {
     }
   }
 
-  // Phase 2: if we had transient rate limits, retry those with backoff
+  // Phase 2: if we had transient rate limits, retry with shorter backoffs
   if (rateLimitedModels.length) {
-    const delays = [3000, 8000, 15000, 25000];
+    const delays = [2000, 4000, 8000];
     for (let attempt = 0; attempt < delays.length; attempt++) {
       const model = rateLimitedModels[attempt % rateLimitedModels.length];
       console.log(`[RETRY ${attempt + 1}/${delays.length}] Waiting ${delays[attempt] / 1000}s, retrying ${model}...`);
       await sleep(delays[attempt]);
       try {
         const text = await callGeminiRaw(model, prompt, genConfig);
-        console.log(`[OK] ${model} (retry ${attempt + 1})`);
+        const retryUsed = getRpdUsage(model), retryLimit = RPD_LIMITS[model] || '?';
+        console.log(`[OK] ${model} (retry ${attempt + 1}, RPD: ${retryUsed}/${retryLimit})`);
         delete modelStatus[model];
         return text;
       } catch (e) {
