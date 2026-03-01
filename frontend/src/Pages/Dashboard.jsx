@@ -280,9 +280,13 @@ const Dashboard = () => {
           {/* User info */}
           <div className="px-5 pb-4 border-b border-surface-800/60">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-surface-800 flex items-center justify-center text-xs font-bold text-surface-300">
-                {(userProfile?.name || user.displayName || user.email || "?")[0].toUpperCase()}
-              </div>
+              {userProfile?.profileImage ? (
+                <img src={userProfile.profileImage} alt="" className="w-8 h-8 rounded-full object-cover ring-1 ring-surface-700" />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-surface-800 flex items-center justify-center text-xs font-bold text-surface-300">
+                  {(userProfile?.name || user.displayName || user.email || "?")[0].toUpperCase()}
+                </div>
+              )}
               <div className="min-w-0">
                 <p className="text-xs font-semibold text-surface-100 truncate">
                   {userProfile?.name || user.displayName || user.email?.split('@')[0]}
@@ -339,7 +343,13 @@ const Dashboard = () => {
               <span className="text-sm font-bold text-surface-50">FoodCal</span>
             </div>
             <div className="flex items-center gap-1">
-              <button onClick={() => navigate("/profile")} className="p-1.5 text-surface-500 hover:text-surface-100 rounded-md transition-all text-xs">👤</button>
+              <button onClick={() => navigate("/profile")} className="p-1 rounded-full transition-all" title="Profile">
+                {userProfile?.profileImage ? (
+                  <img src={userProfile.profileImage} alt="" className="w-6 h-6 rounded-full object-cover ring-1 ring-surface-700" />
+                ) : (
+                  <span className="text-surface-500 hover:text-surface-100 text-xs">👤</span>
+                )}
+              </button>
               <button onClick={handleLogout} className="px-2 py-1 text-[10px] font-medium text-surface-400 border border-surface-700/50 rounded-md transition-all">Log out</button>
             </div>
           </div>

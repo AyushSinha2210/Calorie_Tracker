@@ -1,9 +1,35 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase";
 import "./Auth.css";
+
+/** Resize an image file to a small square JPEG and return a base64 data-URL */
+function resizeImage(file, maxSize = 160) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const c = document.createElement("canvas");
+        c.width = maxSize;
+        c.height = maxSize;
+        const ctx = c.getContext("2d");
+        // Center-crop to square
+        const min = Math.min(img.width, img.height);
+        const sx = (img.width - min) / 2;
+        const sy = (img.height - min) / 2;
+        ctx.drawImage(img, sx, sy, min, min, 0, 0, maxSize, maxSize);
+        resolve(c.toDataURL("image/jpeg", 0.8));
+      };
+      img.onerror = reject;
+      img.src = reader.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
 
 const labelStyle = { display: "block", fontSize: 11, fontWeight: 600, marginBottom: 4, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.05em" };
 const inputStyle = { width: "100%", padding: "10px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 14, boxSizing: "border-box", background: "var(--bg-card-alt)", color: "var(--text)" };
@@ -26,6 +52,9 @@ function Profile() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
+  const [profileImage, setProfileImage] = useState(null);  // base64 data-URL
+  const [imageUploading, setImageUploading] = useState(false);
+  const imgInputRef = useRef(null);
 
   useEffect(() => {
     if (!userProfile) return;
@@ -37,7 +66,37 @@ function Profile() {
     setHeightUnit(userProfile.heightUnit || "cm");
     setCalorieTarget(userProfile.dailyCalorieTarget?.toString() || "");
     setGender(userProfile.gender || "");
+    setProfileImage(userProfile.profileImage || null);
   }, [userProfile, user?.displayName]);
+
+  const handleImageChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) return setError("Please select an image file.");
+    if (file.size > 5 * 1024 * 1024) return setError("Image must be under 5 MB.");
+    setImageUploading(true);
+    setError("");
+    try {
+      const dataUrl = await resizeImage(file, 160);
+      setProfileImage(dataUrl);
+      // Save immediately to Firestore so it appears on Dashboard right away
+      await setDoc(doc(db, "users", user.uid), { profileImage: dataUrl }, { merge: true });
+      setSuccess("Profile photo updated!");
+    } catch {
+      setError("Failed to process image. Try another one.");
+    } finally {
+      setImageUploading(false);
+      if (imgInputRef.current) imgInputRef.current.value = "";
+    }
+  };
+
+  const removeImage = async () => {
+    setProfileImage(null);
+    try {
+      await setDoc(doc(db, "users", user.uid), { profileImage: "" }, { merge: true });
+      setSuccess("Profile photo removed.");
+    } catch { setError("Failed to remove photo."); }
+  };
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -90,10 +149,27 @@ function Profile() {
 
         {/* Avatar / user info */}
         <div style={{ textAlign: "center", marginBottom: 20 }}>
-          <div style={{ width: 64, height: 64, borderRadius: "50%", background: "var(--surface-900, #1c1917)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 10px", fontSize: 28, color: "#fff", fontWeight: 700 }}>
-            {(userProfile?.name || user?.displayName || user?.email || "?")[0].toUpperCase()}
+          <div style={{ position: "relative", display: "inline-block", cursor: "pointer" }} onClick={() => imgInputRef.current?.click()} title="Click to change photo">
+            {profileImage ? (
+              <img src={profileImage} alt="Profile" style={{ width: 72, height: 72, borderRadius: "50%", objectFit: "cover", border: "2px solid var(--brand)" }} />
+            ) : (
+              <div style={{ width: 72, height: 72, borderRadius: "50%", background: "var(--surface-900, #1c1917)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, color: "#fff", fontWeight: 700 }}>
+                {(userProfile?.name || user?.displayName || user?.email || "?")[0].toUpperCase()}
+              </div>
+            )}
+            <div style={{ position: "absolute", bottom: 0, right: 0, width: 24, height: 24, borderRadius: "50%", background: "var(--brand)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: "#fff", border: "2px solid var(--bg)", lineHeight: 1 }}>
+              {imageUploading ? "…" : "📷"}
+            </div>
           </div>
-          <div style={{ fontWeight: 600, fontSize: 16, color: "var(--text)" }}>{userProfile?.name || user?.displayName || "—"}</div>
+          <input ref={imgInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleImageChange} />
+          {profileImage && (
+            <div style={{ marginTop: 6 }}>
+              <button onClick={(e) => { e.stopPropagation(); removeImage(); }} style={{ background: "none", border: "none", color: "var(--text-muted)", fontSize: 11, cursor: "pointer", textDecoration: "underline" }}>
+                Remove photo
+              </button>
+            </div>
+          )}
+          <div style={{ fontWeight: 600, fontSize: 16, color: "var(--text)", marginTop: profileImage ? 4 : 10 }}>{userProfile?.name || user?.displayName || "—"}</div>
           <div style={{ fontSize: 13, color: "var(--text-muted)" }}>{user?.email}</div>
         </div>
 
