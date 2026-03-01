@@ -1,43 +1,24 @@
 import admin from "firebase-admin";
-import nodemailer from "nodemailer";
-import dns from "node:dns/promises";
+import { Resend } from "resend";
 import cron from "node-cron";
 
-// ── Email transporter (Gmail App Password) ──
-let transporter = null;
+// ── Resend email client ──
+let resend = null;
 
-/**
- * Resolve smtp.gmail.com to an IPv4 address, then build the transport
- * with a raw IP so Node never attempts an IPv6 connection.
- */
-async function getTransporter() {
-  if (transporter) return transporter;
-  const user = process.env.EMAIL_USER;
-  const pass = process.env.EMAIL_APP_PASSWORD;
-  if (!user || !pass) throw new Error("EMAIL_USER and EMAIL_APP_PASSWORD must be set in .env");
+function getResend() {
+  if (resend) return resend;
+  const key = process.env.RESEND_API_KEY;
+  if (!key) throw new Error("RESEND_API_KEY must be set in env");
+  resend = new Resend(key);
+  return resend;
+}
 
-  // Resolve to IPv4 explicitly — Render free tier has no IPv6 connectivity
-  let host = "smtp.gmail.com";
-  try {
-    const addrs = await dns.resolve4("smtp.gmail.com");
-    if (addrs.length) host = addrs[0]; // e.g. "142.250.115.108"
-    console.log(`[EMAIL] Resolved smtp.gmail.com → ${host}`);
-  } catch (e) {
-    console.warn("[EMAIL] IPv4 resolve failed, falling back to hostname:", e.message);
-  }
-
-  transporter = nodemailer.createTransport({
-    host,
-    port: 587,
-    secure: false,
-    auth: { user, pass },
-    requireTLS: true,
-    tls: { servername: "smtp.gmail.com" }, // for TLS certificate validation
-    connectionTimeout: 30000,
-    greetingTimeout: 30000,
-    socketTimeout: 60000,
-  });
-  return transporter;
+/** Send an email via Resend */
+async function sendEmail({ to, subject, html }) {
+  const r = getResend();
+  const fromAddr = process.env.EMAIL_FROM || "FoodCal <onboarding@resend.dev>";
+  const { error } = await r.emails.send({ from: fromAddr, to, subject, html });
+  if (error) throw new Error(error.message || JSON.stringify(error));
 }
 
 // ── Firestore helpers ──
@@ -417,9 +398,7 @@ export async function sendReportForUser(uid, email, displayName, frequency) {
   const freqLabel = frequency.charAt(0).toUpperCase() + frequency.slice(1);
   const html = buildEmailHtml(frequency, displayName, weightLogs, foodLogs, workoutLogs, { start, end }, maintenanceCalories);
 
-  const mailer = await getTransporter();
-  await mailer.sendMail({
-    from: `"FoodCal" <${process.env.EMAIL_USER}>`,
+  await sendEmail({
     to: email,
     subject: `${freqLabel} FoodCal Report (${start}${start !== end ? " – " + end : ""})`,
     html,
@@ -441,9 +420,7 @@ export async function sendOnDemandReportWithData({ email, displayName, frequency
   const freqLabel = (frequency || "weekly").charAt(0).toUpperCase() + (frequency || "weekly").slice(1);
   const html = buildEmailHtml(frequency || "weekly", displayName, weightLogs || [], foodLogs || [], workoutLogs || [], { start, end }, maintenanceCalories || 0);
 
-  const mailer = await getTransporter();
-  await mailer.sendMail({
-    from: `"FoodCal" <${process.env.EMAIL_USER}>`,
+  await sendEmail({
     to: email,
     subject: `${freqLabel} FoodCal Report (${start}${start !== end ? " – " + end : ""})`,
     html,
@@ -599,9 +576,7 @@ async function checkAndSendWeightReminders() {
     try {
       const displayName = data.displayName || data.name || "";
       const html = buildWeightReminderHtml(displayName, daysSince);
-      const mailer = await getTransporter();
-      await mailer.sendMail({
-        from: `"FoodCal" <${process.env.EMAIL_USER}>`,
+      await sendEmail({
         to: email,
         subject: `⚖️ Time to log your weight${daysSince ? ` (${daysSince} days since last entry)` : ""}`,
         html,
@@ -623,9 +598,8 @@ async function checkAndSendWeightReminders() {
 
 // ── Cron schedule: runs every minute ──
 export function scheduleEmailReports() {
-  const emailConfigured = process.env.EMAIL_USER && process.env.EMAIL_APP_PASSWORD;
-  if (!emailConfigured) {
-    console.log("[EMAIL] Skipped - EMAIL_USER / EMAIL_APP_PASSWORD not set.");
+  if (!process.env.RESEND_API_KEY) {
+    console.log("[EMAIL] Skipped - RESEND_API_KEY not set.");
     return;
   }
 

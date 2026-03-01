@@ -19,6 +19,6 @@
     "firebase-admin": "^13.6.1",
     "multer": "^2.0.2",
     "node-cron": "^4.2.1",
-    "nodemailer": "^8.0.1"
+    "resend": "^6.9.3"
   }
 }
