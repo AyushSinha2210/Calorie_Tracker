@@ -1,7 +1,14 @@
 import "dotenv/config";
 import dns from "node:dns";
-// Force IPv4 globally — Render free tier cannot reach external services over IPv6
+// Force ALL DNS lookups to IPv4 — Render free tier has no IPv6 connectivity
 dns.setDefaultResultOrder("ipv4first");
+const _origLookup = dns.lookup;
+dns.lookup = function (hostname, options, cb) {
+  if (typeof options === "function") { cb = options; options = { family: 4 }; }
+  else if (typeof options === "number") { options = { family: 4 }; }
+  else { options = Object.assign({}, options || {}, { family: 4 }); }
+  return _origLookup.call(dns, hostname, options, cb);
+};
 import express from "express";
 import cors from "cors";
 import { detectFoodFromImage, getGeminiModelStatus } from "./services/geminiService.js";
