@@ -1,4 +1,7 @@
 import "dotenv/config";
+import dns from "node:dns";
+// Force IPv4 globally — Render free tier cannot reach external services over IPv6
+dns.setDefaultResultOrder("ipv4first");
 import express from "express";
 import cors from "cors";
 import { detectFoodFromImage, getGeminiModelStatus } from "./services/geminiService.js";
