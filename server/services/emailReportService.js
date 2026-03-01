@@ -11,8 +11,13 @@ function getTransporter() {
   const pass = process.env.EMAIL_APP_PASSWORD;
   if (!user || !pass) throw new Error("EMAIL_USER and EMAIL_APP_PASSWORD must be set in .env");
   transporter = nodemailer.createTransport({
-    service: "gmail",
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
     auth: { user, pass },
+    // Force IPv4 — Render free tier cannot reach Gmail over IPv6
+    tls: { servername: "smtp.gmail.com" },
+    family: 4,
   });
   return transporter;
 }
