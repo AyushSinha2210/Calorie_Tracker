@@ -61,12 +61,12 @@ function ForgotPassword() {
           <div style={styles.successBox}>
             <div style={{ fontSize: "40px", marginBottom: "12px" }}>✉️</div>
             <h3 style={{ margin: "0 0 8px", color: "#27ae60" }}>Email Sent!</h3>
-            <p style={{ margin: 0, fontSize: "14px", color: "#555", lineHeight: "1.6" }}>
+            <p style={{ margin: 0, fontSize: "14px", color: "var(--text-secondary)", lineHeight: "1.6" }}>
               We've sent a password reset link to <strong>{email}</strong>. Check your inbox (and spam folder) and click the link to set a new password.
             </p>
             <button
               onClick={() => { setSent(false); setEmail(""); }}
-              style={{ ...styles.button, background: "#f0f1ff", color: "#667eea", marginTop: "16px" }}
+              style={{ ...styles.button, background: "var(--bg-card-alt)", color: "var(--brand)", marginTop: "16px" }}
             >
               Send to a different email
             </button>
@@ -75,7 +75,7 @@ function ForgotPassword() {
 
         <div style={styles.links}>
           <Link to="/login" style={styles.link}>← Back to Login</Link>
-          <span style={{ color: "#ccc" }}>|</span>
+          <span style={{ color: "var(--text-muted)" }}>|</span>
           <Link to="/register" style={styles.link}>Create Account</Link>
         </div>
       </div>
@@ -89,38 +89,40 @@ const styles = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+    background: "var(--bg)",
     padding: "20px",
+    position: "relative",
   },
   card: {
-    background: "#fff",
-    borderRadius: "16px",
+    background: "var(--bg)",
+    borderRadius: "var(--radius)",
     padding: "36px 32px",
     maxWidth: "420px",
     width: "100%",
-    boxShadow: "0 8px 30px rgba(0,0,0,0.15)",
+    border: "1px solid var(--border)",
     textAlign: "center",
   },
   iconCircle: {
-    width: "60px",
-    height: "60px",
-    borderRadius: "50%",
-    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+    width: "48px",
+    height: "48px",
+    borderRadius: "12px",
+    background: "var(--surface-900, #1c1917)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     margin: "0 auto 16px",
-    fontSize: "28px",
+    fontSize: "24px",
   },
   heading: {
     margin: "0 0 8px",
     fontSize: "22px",
-    color: "#333",
+    color: "var(--text)",
+    letterSpacing: "-0.025em",
   },
   subtext: {
     margin: "0 0 20px",
     fontSize: "14px",
-    color: "#777",
+    color: "var(--text-secondary)",
     lineHeight: "1.5",
   },
   field: {
@@ -129,33 +131,37 @@ const styles = {
   },
   label: {
     display: "block",
-    fontSize: "13px",
+    fontSize: "11px",
     fontWeight: 600,
-    color: "#555",
+    color: "var(--text-secondary)",
     marginBottom: "6px",
+    textTransform: "uppercase",
+    letterSpacing: "0.05em",
   },
   input: {
     width: "100%",
     padding: "12px 14px",
     borderRadius: "8px",
-    border: "1.5px solid #ddd",
+    border: "1px solid var(--border)",
     fontSize: "15px",
     fontFamily: "inherit",
     outline: "none",
     boxSizing: "border-box",
-    transition: "border-color 0.2s",
+    transition: "all 0.2s",
+    background: "var(--bg-card-alt)",
+    color: "var(--text)",
   },
   button: {
     width: "100%",
     padding: "12px",
-    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+    background: "var(--surface-900, #1c1917)",
     color: "#fff",
     border: "none",
     borderRadius: "8px",
     fontSize: "15px",
     fontWeight: 600,
     cursor: "pointer",
-    transition: "transform 0.15s",
+    transition: "all 0.2s",
   },
   error: {
     background: "#fee",
@@ -169,8 +175,8 @@ const styles = {
   },
   successBox: {
     padding: "20px",
-    background: "#f0faf0",
-    borderRadius: "12px",
+    background: "var(--bg-card-alt)",
+    borderRadius: "10px",
     marginBottom: "16px",
   },
   links: {
@@ -181,7 +187,7 @@ const styles = {
     fontSize: "13px",
   },
   link: {
-    color: "#667eea",
+    color: "var(--brand)",
     textDecoration: "none",
     fontWeight: 600,
   },

@@ -91,37 +91,37 @@ const PromptGenerator = () => {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-6">
+    <div className="card p-5 mb-6">
       <div className="flex items-center gap-2 mb-4">
         <span className="text-2xl">📋</span>
-        <h3 className="text-lg font-bold text-gray-800 m-0">Prompt Generator</h3>
+        <h3 className="text-lg font-bold text-surface-800 dark:text-surface-100 m-0">Prompt Generator</h3>
       </div>
-      <p className="text-sm text-gray-500 mb-4 m-0">
+      <p className="text-sm text-surface-500 dark:text-surface-400 mb-4 m-0">
         Generate ready-to-use prompts for ChatGPT, Gemini, or any AI — pre-filled with your profile data. Just copy & paste!
       </p>
 
       {/* Customization fields */}
-      <div className="mb-4 p-3 bg-gray-50 rounded-xl border border-gray-100">
-        <div className="text-sm font-semibold text-gray-600 mb-2">Customize (optional)</div>
+      <div className="mb-4 p-3 bg-surface-50 dark:bg-surface-800 rounded-lg border border-surface-200 dark:border-surface-700">
+        <div className="text-sm font-semibold text-surface-600 dark:text-surface-300 mb-2">Customize (optional)</div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <div>
-            <label htmlFor="pg-goal" className="text-xs font-medium text-gray-500 block mb-1">Your Goal</label>
+            <label htmlFor="pg-goal" className="text-xs font-medium text-surface-500 dark:text-surface-400 block mb-1">Your Goal</label>
             <input
               id="pg-goal"
               type="text"
               value={goal}
               onChange={e => setGoal(e.target.value)}
               placeholder="e.g. Lose 5kg, Build muscle"
-              className="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:ring-1 focus:ring-brand-400 focus:border-brand-400 outline-none"
+              className="w-full px-3 py-1.5 text-sm border border-surface-200 dark:border-surface-600 rounded-lg focus:ring-1 focus:ring-brand-400 focus:border-brand-400 outline-none bg-white dark:bg-surface-700 text-surface-900 dark:text-surface-100 placeholder:text-surface-400"
             />
           </div>
           <div>
-            <label htmlFor="pg-fitness" className="text-xs font-medium text-gray-500 block mb-1">Fitness Level</label>
+            <label htmlFor="pg-fitness" className="text-xs font-medium text-surface-500 dark:text-surface-400 block mb-1">Fitness Level</label>
             <select
               id="pg-fitness"
               value={fitnessLevel}
               onChange={e => setFitnessLevel(e.target.value)}
-              className="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:ring-1 focus:ring-brand-400 focus:border-brand-400 outline-none bg-white"
+              className="w-full px-3 py-1.5 text-sm border border-surface-200 dark:border-surface-600 rounded-lg focus:ring-1 focus:ring-brand-400 focus:border-brand-400 outline-none bg-white dark:bg-surface-700 text-surface-900 dark:text-surface-100"
             >
               <option>Beginner</option>
               <option>Intermediate</option>
@@ -129,34 +129,34 @@ const PromptGenerator = () => {
             </select>
           </div>
           <div>
-            <label htmlFor="pg-diet" className="text-xs font-medium text-gray-500 block mb-1">Diet Preference</label>
+            <label htmlFor="pg-diet" className="text-xs font-medium text-surface-500 dark:text-surface-400 block mb-1">Diet Preference</label>
             <input
               id="pg-diet"
               type="text"
               value={dietPref}
               onChange={e => setDietPref(e.target.value)}
               placeholder="e.g. Vegetarian, Keto"
-              className="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:ring-1 focus:ring-brand-400 focus:border-brand-400 outline-none"
+              className="w-full px-3 py-1.5 text-sm border border-surface-200 dark:border-surface-600 rounded-lg focus:ring-1 focus:ring-brand-400 focus:border-brand-400 outline-none bg-white dark:bg-surface-700 text-surface-900 dark:text-surface-100 placeholder:text-surface-400"
             />
           </div>
           <div>
-            <label htmlFor="pg-target" className="text-xs font-medium text-gray-500 block mb-1">Target Weight (kg)</label>
+            <label htmlFor="pg-target" className="text-xs font-medium text-surface-500 dark:text-surface-400 block mb-1">Target Weight (kg)</label>
             <input
               id="pg-target"
               type="number"
               value={targetWeight}
               onChange={e => setTargetWeight(e.target.value)}
               placeholder="e.g. 65"
-              className="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:ring-1 focus:ring-brand-400 focus:border-brand-400 outline-none"
+              className="w-full px-3 py-1.5 text-sm border border-surface-200 dark:border-surface-600 rounded-lg focus:ring-1 focus:ring-brand-400 focus:border-brand-400 outline-none bg-white dark:bg-surface-700 text-surface-900 dark:text-surface-100 placeholder:text-surface-400"
             />
           </div>
           <div>
-            <label htmlFor="pg-time" className="text-xs font-medium text-gray-500 block mb-1">Timeframe</label>
+            <label htmlFor="pg-time" className="text-xs font-medium text-surface-500 dark:text-surface-400 block mb-1">Timeframe</label>
             <select
               id="pg-time"
               value={timeframe}
               onChange={e => setTimeframe(e.target.value)}
-              className="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:ring-1 focus:ring-brand-400 focus:border-brand-400 outline-none bg-white"
+              className="w-full px-3 py-1.5 text-sm border border-surface-200 dark:border-surface-600 rounded-lg focus:ring-1 focus:ring-brand-400 focus:border-brand-400 outline-none bg-white dark:bg-surface-700 text-surface-900 dark:text-surface-100"
             >
               <option>1 month</option>
               <option>2 months</option>
@@ -166,14 +166,14 @@ const PromptGenerator = () => {
             </select>
           </div>
           <div>
-            <label htmlFor="pg-const" className="text-xs font-medium text-gray-500 block mb-1">Constraints</label>
+            <label htmlFor="pg-const" className="text-xs font-medium text-surface-500 dark:text-surface-400 block mb-1">Constraints</label>
             <input
               id="pg-const"
               type="text"
               value={constraints}
               onChange={e => setConstraints(e.target.value)}
               placeholder="e.g. Bad knees, No running"
-              className="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:ring-1 focus:ring-brand-400 focus:border-brand-400 outline-none"
+              className="w-full px-3 py-1.5 text-sm border border-surface-200 dark:border-surface-600 rounded-lg focus:ring-1 focus:ring-brand-400 focus:border-brand-400 outline-none bg-white dark:bg-surface-700 text-surface-900 dark:text-surface-100 placeholder:text-surface-400"
             />
           </div>
         </div>
@@ -187,12 +187,12 @@ const PromptGenerator = () => {
             onClick={() => generatePrompt(t.key)}
             disabled={loading}
             className={`text-left p-3 rounded-xl text-sm transition-all border ${selectedTemplate === t.key
-              ? "bg-brand-50 border-brand-300 ring-1 ring-brand-200"
-              : "bg-white border-gray-200 hover:border-brand-200 hover:bg-brand-50/30"
+              ? "bg-brand-50 dark:bg-brand-900/20 border-brand-300 dark:border-brand-700 ring-1 ring-brand-200 dark:ring-brand-800"
+              : "bg-white dark:bg-surface-800 border-surface-200 dark:border-surface-600 hover:border-brand-200 dark:hover:border-brand-700 hover:bg-brand-50/30"
               } disabled:opacity-50`}
           >
-            <div className="font-semibold text-gray-700">{t.title}</div>
-            <div className="text-xs text-gray-400 mt-0.5">{t.description}</div>
+            <div className="font-semibold text-surface-700 dark:text-surface-200">{t.title}</div>
+            <div className="text-xs text-surface-400 mt-0.5">{t.description}</div>
           </button>
         ))}
       </div>
@@ -207,23 +207,23 @@ const PromptGenerator = () => {
             className="relative"
           >
             <div className="flex items-center justify-between mb-2">
-              <div className="text-sm font-semibold text-gray-700">{promptTitle}</div>
+              <div className="text-sm font-semibold text-surface-700 dark:text-surface-200">{promptTitle}</div>
               <button
                 onClick={copyToClipboard}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${copied
-                  ? "bg-green-100 text-green-700 border border-green-200"
-                  : "bg-brand-50 text-brand-600 border border-brand-200 hover:bg-brand-100"
+                  ? "bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800"
+                  : "bg-brand-50 dark:bg-brand-900/20 text-brand-600 dark:text-brand-400 border border-brand-200 dark:border-brand-700 hover:bg-brand-100 dark:hover:bg-brand-900/40"
                   }`}
               >
                 {copied ? "✓ Copied!" : "📋 Copy Prompt"}
               </button>
             </div>
-            <div className="bg-gray-50 rounded-xl border border-gray-200 p-4 max-h-80 overflow-y-auto">
-              <pre className="whitespace-pre-wrap text-sm text-gray-700 font-sans m-0 leading-relaxed">
+            <div className="bg-surface-50 dark:bg-surface-700 rounded-xl border border-surface-200 dark:border-surface-600 p-4 max-h-80 overflow-y-auto">
+              <pre className="whitespace-pre-wrap text-sm text-surface-700 dark:text-surface-200 font-sans m-0 leading-relaxed">
                 {generatedPrompt}
               </pre>
             </div>
-            <p className="text-xs text-gray-400 mt-2 m-0">
+            <p className="text-xs text-surface-400 mt-2 m-0">
               Paste this prompt into ChatGPT, Gemini, Claude, or any AI assistant to get your personalized plan.
             </p>
           </motion.div>
@@ -231,7 +231,7 @@ const PromptGenerator = () => {
       </AnimatePresence>
 
       {loading && !generatedPrompt && (
-        <div className="text-center py-4 text-sm text-gray-400">
+        <div className="text-center py-4 text-sm text-surface-400">
           <span className="inline-block w-4 h-4 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mr-2" />{" "}
           Generating prompt...
         </div>

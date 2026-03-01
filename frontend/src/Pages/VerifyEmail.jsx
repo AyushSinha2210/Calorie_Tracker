@@ -60,8 +60,8 @@ function VerifyEmail() {
     <div style={wrapper}>
       <div style={card}>
         <div style={{ fontSize: "48px", textAlign: "center", marginBottom: "10px" }}>📧</div>
-        <h2 style={{ margin: "0 0 8px", textAlign: "center" }}>Verify Your Email</h2>
-        <p style={{ color: "#666", textAlign: "center", margin: "0 0 20px", fontSize: "14px" }}>
+        <h2 style={{ margin: "0 0 8px", textAlign: "center", color: "var(--text)" }}>Verify Your Email</h2>
+        <p style={{ color: "var(--text-secondary)", textAlign: "center", margin: "0 0 20px", fontSize: "14px" }}>
           We sent a verification link to <strong>{user.email}</strong>. Please check your inbox and click the link to activate your account.
         </p>
 
@@ -91,35 +91,36 @@ const wrapper = {
   justifyContent: "center",
   minHeight: "100vh",
   padding: "20px",
+  background: "var(--bg)",
 };
 
 const card = {
   maxWidth: "420px",
   width: "100%",
-  padding: "32px",
-  borderRadius: "12px",
-  boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
-  background: "#fff",
+  padding: "36px 32px",
+  borderRadius: "var(--radius)",
+  border: "1px solid var(--border)",
+  background: "var(--bg)",
 };
 
 const msgBox = {
-  background: "#f0f4ff",
-  color: "#335",
+  background: "var(--bg-card-alt)",
+  color: "var(--text)",
   padding: "10px 14px",
   borderRadius: "6px",
   marginBottom: "16px",
   fontSize: "13px",
   textAlign: "center",
-  border: "1px solid #dde4f6",
+  border: "1px solid var(--border)",
 };
 
 const primaryBtn = {
   width: "100%",
   padding: "12px",
-  background: "linear-gradient(135deg, #5568d3 0%, #6a3a8a 100%)",
+  background: "var(--surface-900, #1c1917)",
   color: "#fff",
   border: "none",
-  borderRadius: "5px",
+  borderRadius: "8px",
   fontSize: "15px",
   fontWeight: 600,
   cursor: "pointer",
@@ -129,10 +130,10 @@ const primaryBtn = {
 const secondaryBtn = {
   width: "100%",
   padding: "10px",
-  background: "#f5f5f5",
-  color: "#555",
-  border: "1px solid #ddd",
-  borderRadius: "5px",
+  background: "var(--bg-card-alt)",
+  color: "var(--text-secondary)",
+  border: "1px solid var(--border)",
+  borderRadius: "8px",
   fontSize: "14px",
   cursor: "pointer",
   marginBottom: "10px",
@@ -142,7 +143,7 @@ const linkBtn = {
   width: "100%",
   padding: "8px",
   background: "none",
-  color: "#888",
+  color: "var(--text-muted)",
   border: "none",
   fontSize: "13px",
   cursor: "pointer",

@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 
 const MEAL_TYPES = ["Breakfast", "Lunch", "Evening Snacks", "Dinner", "Late Night", "Others"];
 const MEAL_COLORS = {
-  Breakfast: "#FF9800", Lunch: "#4CAF50", "Evening Snacks": "#9C27B0",
+  Breakfast: "#FF9800", Lunch: "#4CAF50", "Evening Snacks": "#10b981",
   Dinner: "#2196F3", "Late Night": "#607D8B", Others: "#795548",
 };
 
@@ -28,12 +28,12 @@ const getMonthLabel = (dateStr) => {
   return d.toLocaleDateString("en-US", { month: "long", year: "numeric" });
 };
 
-const MonthlyNutritionTable = ({ allLogs = [], workoutLogs = [], maintenanceCalories = 0 }) => {
+const MonthlyNutritionTable = ({ allLogs = [] }) => {
   const [expandedDate, setExpandedDate] = useState(null);
 
   const dates = useMemo(() => getDateRange(60), []);
 
-  // Group food logs by date
+  // Group logs by date
   const logsByDate = useMemo(() => {
     const map = {};
     for (const log of allLogs) {
@@ -42,16 +42,6 @@ const MonthlyNutritionTable = ({ allLogs = [], workoutLogs = [], maintenanceCalo
     }
     return map;
   }, [allLogs]);
-
-  // Group workout logs by date
-  const workoutsByDate = useMemo(() => {
-    const map = {};
-    for (const log of workoutLogs) {
-      if (!map[log.date]) map[log.date] = [];
-      map[log.date].push(log);
-    }
-    return map;
-  }, [workoutLogs]);
 
   // Group dates by month
   const months = useMemo(() => {
@@ -94,15 +84,12 @@ const MonthlyNutritionTable = ({ allLogs = [], workoutLogs = [], maintenanceCalo
               <span style={styles.col}>Items</span>
               <span style={styles.col}>Calories</span>
               <span style={styles.col}>Protein</span>
-              <span style={styles.col}>Deficit</span>
             </div>
 
             {monthDates.map((date) => {
               const dayLogs = logsByDate[date] || [];
               const cal = Math.round(dayLogs.reduce((s, l) => s + (l.calories || 0), 0));
               const pro = Math.round(dayLogs.reduce((s, l) => s + (l.protein || 0), 0) * 10) / 10;
-              const dayBurned = (workoutsByDate[date] || []).reduce((s, l) => s + (l.caloriesBurned || 0), 0);
-              const deficit = maintenanceCalories - cal + dayBurned;
               const isExpanded = expandedDate === date;
               const today = new Date().toISOString().split("T")[0];
               const isToday = date === today;
@@ -117,7 +104,7 @@ const MonthlyNutritionTable = ({ allLogs = [], workoutLogs = [], maintenanceCalo
                     onKeyDown={(e) => { if ((e.key === "Enter" || e.key === " ") && dayLogs.length > 0) { e.preventDefault(); toggleDate(date); } }}
                     style={{
                       ...styles.dateRow,
-                      background: isToday ? "#e3f2fd" : (isExpanded ? "#f5f5f5" : "#fff"),
+                      background: isToday ? "var(--brand-light)" : (isExpanded ? "var(--bg-card-alt)" : "var(--bg-card)"),
                       cursor: dayLogs.length > 0 ? "pointer" : "default",
                       opacity: dayLogs.length === 0 ? 0.5 : 1,
                     }}
@@ -128,14 +115,11 @@ const MonthlyNutritionTable = ({ allLogs = [], workoutLogs = [], maintenanceCalo
                       {isToday && <span style={styles.todayBadge}>Today</span>}
                     </span>
                     <span style={styles.col}>{dayLogs.length || "—"}</span>
-                    <span style={{ ...styles.col, color: cal > 0 ? "#e65100" : "#ccc" }}>
+                    <span style={{ ...styles.col, color: cal > 0 ? "#e65100" : "var(--text-muted)" }}>
                       {cal > 0 ? `${cal}` : "—"}
                     </span>
-                    <span style={{ ...styles.col, color: pro > 0 ? "#2e7d32" : "#ccc" }}>
+                    <span style={{ ...styles.col, color: pro > 0 ? "#2e7d32" : "var(--text-muted)" }}>
                       {pro > 0 ? `${pro}g` : "—"}
-                    </span>
-                    <span style={{ ...styles.col, fontWeight: 600, color: (dayLogs.length === 0 && !workoutsByDate[date]?.length) ? "#ccc" : deficit >= 0 ? "#2e7d32" : "#c62828" }}>
-                      {(dayLogs.length === 0 && !workoutsByDate[date]?.length) ? "—" : `${deficit >= 0 ? "↓" : "↑"}${Math.abs(deficit)}`}
                     </span>
                   </div>
 
@@ -155,8 +139,8 @@ const MonthlyNutritionTable = ({ allLogs = [], workoutLogs = [], maintenanceCalo
                             </div>
                             {mealItems.map((item) => (
                               item.items && item.items.length > 0 ? (
-                                <div key={item.id} style={{ marginLeft: "8px", borderLeft: "2px solid #667eea", paddingLeft: "8px", marginBottom: "4px" }}>
-                                  <div style={{ ...styles.mealItem, fontWeight: "500", color: "#667eea", fontSize: "12px" }}>📦 Meal Block ({item.items.length} items)</div>
+                                <div key={item.id} style={{ marginLeft: "8px", borderLeft: "2px solid var(--brand)", paddingLeft: "8px", marginBottom: "4px" }}>
+                                  <div style={{ ...styles.mealItem, fontWeight: "500", color: "var(--brand)", fontSize: "12px" }}>📦 Meal Block ({item.items.length} items)</div>
                                   {item.items.map((sub, si) => (
                                     <div key={si} style={styles.mealItem}>
                                       <span style={styles.itemName}>{sub.name}</span>
@@ -183,9 +167,6 @@ const MonthlyNutritionTable = ({ allLogs = [], workoutLogs = [], maintenanceCalo
                         <span style={{ fontWeight: "700" }}>Day Total</span>
                         <span>{cal} kcal</span>
                         <span>{pro}g protein</span>
-                        <span style={{ fontWeight: 700, color: deficit >= 0 ? "#2e7d32" : "#c62828" }}>
-                          {deficit >= 0 ? "↓" : "↑"}{Math.abs(deficit)} deficit
-                        </span>
                       </div>
                     </div>
                   )}
@@ -201,43 +182,45 @@ const MonthlyNutritionTable = ({ allLogs = [], workoutLogs = [], maintenanceCalo
 
 const styles = {
   container: {
-    marginTop: "30px",
-    padding: "20px",
-    background: "#fff",
+    marginTop: "20px",
+    padding: "14px",
+    background: "var(--glass-surface)",
+    backdropFilter: "blur(12px)",
+    WebkitBackdropFilter: "blur(12px)",
     borderRadius: "12px",
-    border: "1px solid #e0e0e0",
-    boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+    border: "1px solid var(--glass-border-subtle)",
   },
-  title: { margin: "0 0 4px 0", fontSize: "20px", color: "#333" },
-  subtitle: { margin: "0 0 20px 0", fontSize: "13px", color: "#888" },
-  monthBlock: { marginBottom: "24px" },
+  title: { margin: "0 0 2px 0", fontSize: "13px", fontWeight: 700, color: "var(--text)", letterSpacing: "-0.025em" },
+  subtitle: { margin: "0 0 12px 0", fontSize: "11px", color: "var(--text-muted)" },
+  monthBlock: { marginBottom: "16px" },
   monthHeader: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: "10px 14px",
-    background: "linear-gradient(135deg, #667eea, #764ba2)",
+    padding: "8px 12px",
+    background: "var(--surface-900, #1c1917)",
     borderRadius: "8px 8px 0 0",
     color: "#fff",
   },
-  monthName: { fontWeight: "700", fontSize: "16px" },
-  monthStats: { fontSize: "12px", opacity: 0.9 },
+  monthName: { fontWeight: "700", fontSize: "12px", letterSpacing: "-0.01em" },
+  monthStats: { fontSize: "10px", opacity: 0.8 },
   tableHeader: {
     display: "flex",
-    padding: "8px 14px",
-    background: "#f0f0f0",
-    fontSize: "12px",
+    padding: "5px 10px",
+    background: "var(--glass-surface-light)",
+    fontSize: "9px",
     fontWeight: "600",
-    color: "#666",
+    color: "var(--text-secondary)",
     textTransform: "uppercase",
-    letterSpacing: "0.5px",
+    letterSpacing: "0.05em",
+    borderBottom: "1px solid var(--border)",
   },
   col: { flex: 1, textAlign: "center" },
   dateRow: {
     display: "flex",
-    padding: "10px 14px",
-    borderBottom: "1px solid #f0f0f0",
-    fontSize: "14px",
+    padding: "6px 10px",
+    borderBottom: "1px solid var(--glass-border-faint)",
+    fontSize: "12px",
     transition: "background 0.15s",
     alignItems: "center",
   },
@@ -253,8 +236,8 @@ const styles = {
   },
   detailPanel: {
     padding: "12px 20px 12px 30px",
-    background: "#fafafa",
-    borderBottom: "2px solid #e0e0e0",
+    background: "var(--bg-card)",
+    borderBottom: "2px solid var(--border)",
   },
   mealSection: { marginBottom: "10px" },
   mealLabel: {
@@ -263,22 +246,22 @@ const styles = {
     alignItems: "center",
     padding: "6px 10px",
     borderLeft: "3px solid #999",
-    background: "#f0f0f0",
+    background: "var(--bg-card-alt)",
     borderRadius: "3px",
     fontSize: "13px",
     marginBottom: "4px",
   },
-  mealTotal: { fontSize: "12px", color: "#777" },
+  mealTotal: { fontSize: "12px", color: "var(--text-muted)" },
   mealItem: {
     display: "flex",
     gap: "12px",
     padding: "5px 10px 5px 16px",
     fontSize: "13px",
-    color: "#555",
+    color: "var(--text-secondary)",
     alignItems: "center",
   },
   itemName: { flex: 2, fontWeight: "500" },
-  itemQty: { flex: 1, color: "#888", textAlign: "center" },
+  itemQty: { flex: 1, color: "var(--text-muted)", textAlign: "center" },
   itemCal: { flex: 1, textAlign: "center", color: "#e65100" },
   itemPro: { flex: 1, textAlign: "center", color: "#2e7d32" },
   dayTotal: {
@@ -286,9 +269,9 @@ const styles = {
     justifyContent: "space-between",
     padding: "8px 10px",
     marginTop: "6px",
-    borderTop: "1px solid #ddd",
+    borderTop: "1px solid var(--border)",
     fontSize: "13px",
-    color: "#333",
+    color: "var(--text)",
   },
 };
 

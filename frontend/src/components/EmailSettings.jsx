@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../context/AuthContext";
 import { doc, getDoc, setDoc, collection, query, where, orderBy, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
+import API_URL from "../config";
 
 const FREQ_OPTIONS = [
   { value: "daily", label: "Daily" },
@@ -18,8 +19,6 @@ const DAYS_OF_WEEK = [
   { value: 5, label: "Fri" },
   { value: 6, label: "Sat" },
 ];
-
-import API_URL from "../config";
 
 // Helper: get date range based on frequency
 function getDateRange(freq) {
@@ -184,7 +183,7 @@ const EmailSettings = () => {
 
       {/* Enable toggle */}
       <div style={styles.toggleRow}>
-        <span style={{ fontSize: "14px", fontWeight: 600 }}>Enable scheduled reports</span>
+        <span style={{ fontSize: "14px", fontWeight: 600, color: "var(--text)" }}>Enable scheduled reports</span>
         <button
           type="button"
           role="switch"
@@ -192,7 +191,7 @@ const EmailSettings = () => {
           onClick={() => setEnabled(!enabled)}
           style={{
             ...styles.toggle,
-            background: enabled ? "#667eea" : "#ccc",
+            background: enabled ? "var(--brand)" : "var(--border)",
             border: "none",
             cursor: "pointer",
           }}
@@ -216,9 +215,9 @@ const EmailSettings = () => {
               onClick={() => setFrequency(opt.value)}
               style={{
                 ...styles.freqBtn,
-                borderColor: frequency === opt.value ? "#667eea" : "#ddd",
-                background: frequency === opt.value ? "#f0f1ff" : "#fff",
-                color: frequency === opt.value ? "#667eea" : "#555",
+                borderColor: frequency === opt.value ? "var(--brand)" : "var(--border)",
+                background: frequency === opt.value ? "var(--brand-light)" : "var(--bg-card)",
+                color: frequency === opt.value ? "var(--brand)" : "var(--text-secondary)",
               }}
             >
               <strong>{opt.label}</strong>
@@ -253,8 +252,8 @@ const EmailSettings = () => {
                   onClick={() => setDayOfWeek(d.value)}
                   style={{
                     ...styles.dayBtn,
-                    background: dayOfWeek === d.value ? "#667eea" : "#f0f1ff",
-                    color: dayOfWeek === d.value ? "#fff" : "#555",
+                    background: dayOfWeek === d.value ? "var(--brand)" : "var(--brand-light)",
+                    color: dayOfWeek === d.value ? "#fff" : "var(--text-secondary)",
                     fontWeight: dayOfWeek === d.value ? 700 : 500,
                   }}
                 >
@@ -329,36 +328,38 @@ const EmailSettings = () => {
 
 const styles = {
   card: {
-    background: "#fff",
-    borderRadius: "12px",
+    background: "var(--bg)",
+    borderRadius: "var(--radius)",
     padding: "24px",
-    boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
-    border: "1px solid #eee",
+    border: "1px solid var(--border)",
     marginTop: "16px",
   },
   heading: {
     margin: "0 0 4px",
     fontSize: "18px",
-    color: "#333",
+    color: "var(--text)",
+    letterSpacing: "-0.025em",
   },
   subtext: {
     margin: "0 0 16px",
     fontSize: "13px",
-    color: "#777",
+    color: "var(--text-muted)",
     lineHeight: "1.5",
   },
   label: {
     margin: "0 0 8px",
-    fontSize: "13px",
+    fontSize: "11px",
     fontWeight: 600,
-    color: "#555",
+    color: "var(--text-secondary)",
+    textTransform: "uppercase",
+    letterSpacing: "0.05em",
   },
   toggleRow: {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
     padding: "10px 14px",
-    background: "#f8f9ff",
+    background: "var(--bg-card-alt)",
     borderRadius: "8px",
     cursor: "pointer",
   },
@@ -400,9 +401,9 @@ const styles = {
   scheduleBox: {
     marginTop: "16px",
     padding: "16px",
-    background: "#f8f9ff",
+    background: "var(--bg-card-alt)",
     borderRadius: "10px",
-    border: "1px solid #e8e9ff",
+    border: "1px solid var(--border)",
   },
   fieldRow: {
     display: "flex",
@@ -413,17 +414,18 @@ const styles = {
   fieldLabel: {
     fontSize: "13px",
     fontWeight: 600,
-    color: "#555",
+    color: "var(--text-secondary)",
     minWidth: "60px",
   },
   input: {
     padding: "8px 12px",
     borderRadius: "8px",
-    border: "1.5px solid #ddd",
+    border: "1.5px solid var(--border)",
     fontSize: "14px",
     fontFamily: "inherit",
     outline: "none",
-    background: "#fff",
+    background: "var(--bg-input)",
+    color: "var(--text)",
   },
   dayBtn: {
     padding: "6px 10px",
@@ -436,39 +438,41 @@ const styles = {
   summary: {
     marginTop: "4px",
     padding: "10px 14px",
-    background: "#fff",
+    background: "var(--bg-card)",
     borderRadius: "8px",
     fontSize: "13px",
-    color: "#667eea",
-    border: "1px dashed #667eea44",
+    color: "var(--brand)",
+    border: "1px dashed var(--border)",
   },
   saveBtn: {
-    padding: "10px 20px",
-    background: "#667eea",
+    padding: "10px 22px",
+    background: "var(--surface-900, #1c1917)",
     color: "#fff",
     border: "none",
     borderRadius: "8px",
     fontSize: "13px",
     fontWeight: 600,
     cursor: "pointer",
+    transition: "all 0.2s",
   },
   sendBtn: {
-    padding: "10px 20px",
-    background: "#fff",
-    color: "#667eea",
-    border: "2px solid #667eea",
+    padding: "10px 22px",
+    background: "var(--bg-card)",
+    color: "var(--brand)",
+    border: "1px solid var(--border)",
     borderRadius: "8px",
     fontSize: "13px",
     fontWeight: 600,
     cursor: "pointer",
+    transition: "all 0.2s",
   },
   info: {
     marginTop: "16px",
     padding: "14px",
-    background: "#f8f9ff",
+    background: "var(--bg-card-alt)",
     borderRadius: "8px",
     fontSize: "13px",
-    color: "#555",
+    color: "var(--text-secondary)",
   },
 };
 

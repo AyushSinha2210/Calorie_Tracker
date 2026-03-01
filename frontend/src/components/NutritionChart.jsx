@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
+  BarChart, Bar, XAxis, YAxis, Tooltip,
   ResponsiveContainer, LineChart, Line
 } from "recharts";
 
@@ -70,7 +70,7 @@ const NutritionChart = ({ allLogs = [] }) => {
     return (
       <div style={styles.container}>
         <h3 style={styles.title}>📊 Nutrition Tracking</h3>
-        <p style={{ textAlign: "center", color: "#888" }}>
+        <p style={{ textAlign: "center", color: "var(--text-muted)" }}>
           No food data yet. Start logging your meals to see charts!
         </p>
       </div>
@@ -130,7 +130,6 @@ const NutritionChart = ({ allLogs = [] }) => {
             <ResponsiveContainer width="100%" height={250}>
               {chartType === "bar" ? (
                 <BarChart data={data} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
                   <XAxis dataKey="label" tick={{ fontSize: 11 }} />
                   <YAxis tick={{ fontSize: 11 }} />
                   <Tooltip
@@ -141,7 +140,6 @@ const NutritionChart = ({ allLogs = [] }) => {
                 </BarChart>
               ) : (
                 <LineChart data={data} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
                   <XAxis dataKey="label" tick={{ fontSize: 11 }} />
                   <YAxis tick={{ fontSize: 11 }} />
                   <Tooltip
@@ -168,7 +166,6 @@ const NutritionChart = ({ allLogs = [] }) => {
             <ResponsiveContainer width="100%" height={250}>
               {chartType === "bar" ? (
                 <BarChart data={data} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
                   <XAxis dataKey="label" tick={{ fontSize: 11 }} />
                   <YAxis tick={{ fontSize: 11 }} />
                   <Tooltip
@@ -179,7 +176,6 @@ const NutritionChart = ({ allLogs = [] }) => {
                 </BarChart>
               ) : (
                 <LineChart data={data} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
                   <XAxis dataKey="label" tick={{ fontSize: 11 }} />
                   <YAxis tick={{ fontSize: 11 }} />
                   <Tooltip
@@ -211,103 +207,121 @@ const NutritionChart = ({ allLogs = [] }) => {
 
 const styles = {
   container: {
-    marginTop: "30px",
-    padding: "20px",
-    background: "#fff",
+    marginTop: "20px",
+    padding: "14px",
+    background: "var(--glass-surface)",
+    backdropFilter: "blur(12px)",
+    WebkitBackdropFilter: "blur(12px)",
     borderRadius: "12px",
-    border: "1px solid #e0e0e0",
-    boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+    border: "1px solid var(--glass-border-subtle)",
   },
   header: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
     flexWrap: "wrap",
-    marginBottom: "15px",
+    marginBottom: "10px",
   },
   title: {
     margin: 0,
-    fontSize: "20px",
-    color: "#333",
+    fontSize: "13px",
+    fontWeight: 700,
+    color: "var(--text)",
+    letterSpacing: "-0.025em",
   },
   toggleGroup: {
     display: "flex",
-    gap: "4px",
-    background: "#f0f0f0",
-    borderRadius: "6px",
+    gap: "2px",
+    background: "var(--bg-card-alt)",
+    borderRadius: "8px",
     padding: "3px",
+    border: "1px solid var(--border)",
   },
   toggleBtn: {
-    padding: "6px 14px",
+    padding: "4px 12px",
     border: "none",
     background: "transparent",
-    borderRadius: "4px",
+    borderRadius: "5px",
     cursor: "pointer",
-    fontSize: "13px",
-    color: "#666",
+    fontSize: "11px",
+    fontWeight: 600,
+    color: "var(--text-secondary)",
+    transition: "all 0.2s",
   },
   toggleActive: {
-    padding: "6px 14px",
+    padding: "4px 12px",
     border: "none",
-    background: "#667eea",
+    background: "var(--surface-900, #1c1917)",
     color: "#fff",
-    borderRadius: "4px",
+    borderRadius: "5px",
     cursor: "pointer",
-    fontSize: "13px",
+    fontSize: "11px",
+    fontWeight: 600,
   },
   statsRow: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
-    gap: "12px",
-    marginBottom: "25px",
+    gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))",
+    gap: "8px",
+    marginBottom: "16px",
   },
   statCard: {
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    padding: "12px",
-    background: "#f8f9ff",
+    padding: "10px",
+    background: "var(--glass-surface-btn)",
+    backdropFilter: "blur(8px)",
     borderRadius: "8px",
-    border: "1px solid #e8eaf6",
+    border: "1px solid var(--glass-border-faint)",
+    transition: "all 0.2s",
   },
   statLabel: {
-    fontSize: "12px",
-    color: "#888",
-    marginBottom: "4px",
+    fontSize: "9px",
+    color: "var(--text-muted)",
+    marginBottom: "2px",
+    textTransform: "uppercase",
+    letterSpacing: "0.05em",
+    fontWeight: 600,
   },
   statValue: {
-    fontSize: "18px",
+    fontSize: "14px",
     fontWeight: "bold",
-    color: "#333",
+    color: "var(--text)",
   },
   monthSection: {
-    marginBottom: "30px",
-  },
-  monthTitle: {
-    fontSize: "16px",
-    color: "#555",
-    borderBottom: "2px solid #667eea",
-    paddingBottom: "6px",
-    marginBottom: "15px",
-  },
-  chartWrapper: {
     marginBottom: "20px",
   },
+  monthTitle: {
+    fontSize: "12px",
+    fontWeight: 600,
+    color: "var(--text-secondary)",
+    borderBottom: "1px solid var(--border)",
+    paddingBottom: "4px",
+    marginBottom: "10px",
+    textTransform: "uppercase",
+    letterSpacing: "0.05em",
+  },
+  chartWrapper: {
+    marginBottom: "14px",
+  },
   chartLabel: {
-    fontSize: "14px",
-    color: "#666",
-    marginBottom: "8px",
-    marginLeft: "10px",
+    fontSize: "11px",
+    color: "var(--text-secondary)",
+    marginBottom: "6px",
+    marginLeft: "6px",
+    fontWeight: 500,
   },
   tooltip: {
     borderRadius: "8px",
-    border: "1px solid #ddd",
+    border: "1px solid var(--border)",
     fontSize: "13px",
+    background: "var(--bg-card)",
+    color: "var(--text)",
   },
   footerNote: {
     textAlign: "center",
     fontSize: "12px",
-    color: "#aaa",
+    color: "var(--text-muted)",
     marginTop: "10px",
     marginBottom: 0,
   },

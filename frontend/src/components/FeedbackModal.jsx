@@ -4,11 +4,11 @@ import { useAuth } from "../context/AuthContext";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
 const modalBg = {
-  position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", background: "rgba(0,0,0,0.25)", zIndex: 1000,
+  position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", background: "var(--overlay)", zIndex: 1000,
   display: "flex", alignItems: "center", justifyContent: "center"
 };
 const modalCard = {
-  background: "#fff", borderRadius: 10, padding: 28, minWidth: 340, maxWidth: 400, boxShadow: "0 6px 32px rgba(0,0,0,0.18)",
+  background: "var(--bg)", borderRadius: "var(--radius)", padding: 28, minWidth: 340, maxWidth: 400, boxShadow: "0 24px 48px rgba(0,0,0,0.12)", border: "1px solid var(--border)",
 };
 
 export default function FeedbackModal({ open, onClose }) {
@@ -46,14 +46,14 @@ export default function FeedbackModal({ open, onClose }) {
   return (
     <div style={modalBg}>
       <div style={modalCard}>
-        <h2 style={{ margin: 0, fontSize: 20, marginBottom: 10 }}>Send Feedback</h2>
+        <h2 style={{ margin: 0, fontSize: 20, marginBottom: 10, color: "var(--text)" }}>Send Feedback</h2>
         <form onSubmit={handleSubmit}>
           <textarea
             value={text}
             onChange={e => setText(e.target.value)}
             rows={5}
             placeholder="Your feedback..."
-            style={{ width: "100%", padding: 10, border: "1px solid #ccc", borderRadius: 6, fontSize: 15, resize: "vertical", marginBottom: 12 }}
+            style={{ width: "100%", padding: 10, border: "1px solid var(--border)", borderRadius: 6, fontSize: 15, resize: "vertical", marginBottom: 12, background: "var(--bg-input)", color: "var(--text)" }}
             disabled={loading}
             maxLength={1000}
             required
@@ -64,7 +64,7 @@ export default function FeedbackModal({ open, onClose }) {
             <button type="submit" className="auth-button" disabled={loading} style={{ flex: 1 }}>
               {loading ? "Sending..." : "Send"}
             </button>
-            <button type="button" onClick={onClose} disabled={loading} style={{ flex: 1, background: "#eee", color: "#333", border: "none", borderRadius: 5, fontWeight: 600, fontSize: 15, cursor: "pointer" }}>
+            <button type="button" onClick={onClose} disabled={loading} style={{ flex: 1, background: "var(--bg-card-alt)", color: "var(--text)", border: "none", borderRadius: 5, fontWeight: 600, fontSize: 15, cursor: "pointer" }}>
               Cancel
             </button>
           </div>

@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: foodcal-api
+    runtime: node
+    region: oregon
+    plan: free
+    rootDir: server
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GROQ_COACH_API_KEY
+        sync: false
+      - key: FATSECRET_CLIENT_ID
+        sync: false
+      - key: FATSECRET_CLIENT_SECRET
+        sync: false
+      - key: FIREBASE_SERVICE_ACCOUNT
+        sync: false
+      - key: ADMIN_SECRET
+        sync: false
+      - key: EMAIL_USER
+        sync: false
+      - key: EMAIL_APP_PASSWORD
+        sync: false

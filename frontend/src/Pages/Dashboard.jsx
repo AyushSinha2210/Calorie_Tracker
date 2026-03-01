@@ -7,7 +7,7 @@ import FoodForm from "../components/FoodForm";
 import FoodLogEditor from "../components/FoodLogEditor";
 import NutritionChart from "../components/NutritionChart";
 import MonthlyNutritionTable from "../components/MonthlyNutritionTable";
-import WeightPrompt from "../components/WeightPrompt";
+// WeightPrompt removed — manual weight entry is in Weight tab
 import WeightHistory from "../components/WeightHistory";
 import WorkoutTab from "../components/WorkoutTab";
 import EmailSettings from "../components/EmailSettings";
@@ -15,7 +15,7 @@ import FeedbackModal from "../components/FeedbackModal";
 import AICoach from "../components/AICoach";
 import PromptGenerator from "../components/PromptGenerator";
 import { collection, query, where, onSnapshot, getDocs, deleteDoc, doc, orderBy } from "firebase/firestore";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 // Calculate maintenance calories using Mifflin-St Jeor equation
 function calcMaintenanceCalories(profile) {
@@ -29,11 +29,11 @@ function calcMaintenanceCalories(profile) {
 }
 
 const TABS = [
-  { key: "nutrition", label: "🍎 Nutrition" },
-  { key: "workout", label: "🏋️ Workout" },
-  { key: "weight", label: "⚖️ Weight" },
-  { key: "coach", label: "🤖 AI Coach" },
-  { key: "reports", label: "📧 Reports" },
+  { key: "nutrition", label: "Nutrition", icon: "🍎" },
+  { key: "workout", label: "Workout", icon: "🏋️" },
+  { key: "weight", label: "Weight", icon: "⚖️" },
+  { key: "coach", label: "AI Coach", icon: "🤖" },
+  { key: "reports", label: "Reports", icon: "📧" },
 ];
 
 const Dashboard = () => {
@@ -114,101 +114,353 @@ const Dashboard = () => {
   const todayCalBurned = allWorkoutLogs.filter((l) => l.date === today).reduce((s, l) => s + (l.caloriesBurned || 0), 0);
   const todayDeficit = maintenanceCalories - Math.round(totalCalories) + todayCalBurned;
 
+  /* ---- Animated floating UI background pieces ---- */
+  const bgElements = useMemo(() => [
+    // Mini stat cards
+    { type: "card", x: "4%", y: "10%", w: 120, h: 72, delay: 0, dur: 18, label: "1,847", sub: "kcal" },
+    { type: "card", x: "80%", y: "6%", w: 110, h: 66, delay: 2, dur: 20, label: "124g", sub: "protein" },
+    { type: "card", x: "85%", y: "52%", w: 115, h: 68, delay: 5, dur: 19, label: "420", sub: "burned" },
+    { type: "card", x: "2%", y: "65%", w: 108, h: 64, delay: 3, dur: 21, label: "573", sub: "deficit" },
+    { type: "card", x: "45%", y: "88%", w: 105, h: 62, delay: 7, dur: 22, label: "2,100", sub: "target" },
+    // Chart bars
+    { type: "bars", x: "70%", y: "72%", delay: 1, dur: 16 },
+    { type: "bars", x: "12%", y: "40%", delay: 6, dur: 18 },
+    { type: "bars", x: "50%", y: "20%", delay: 4, dur: 17 },
+    // Progress rings
+    { type: "ring", x: "58%", y: "8%", delay: 2, dur: 20, pct: 72 },
+    { type: "ring", x: "30%", y: "78%", delay: 0, dur: 18, pct: 58 },
+    { type: "ring", x: "88%", y: "35%", delay: 5, dur: 22, pct: 85 },
+    // Pill badges
+    { type: "pill", x: "38%", y: "4%", delay: 3, dur: 15, text: "AI Parsed" },
+    { type: "pill", x: "20%", y: "88%", delay: 6, dur: 16, text: "Logged" },
+    { type: "pill", x: "75%", y: "42%", delay: 1, dur: 17, text: "+320 kcal" },
+    { type: "pill", x: "8%", y: "52%", delay: 8, dur: 14, text: "On Track" },
+    // Dots / circles
+    { type: "dot", x: "18%", y: "22%", size: 12, delay: 0, dur: 12 },
+    { type: "dot", x: "62%", y: "58%", size: 10, delay: 3, dur: 14 },
+    { type: "dot", x: "92%", y: "25%", size: 14, delay: 1, dur: 11 },
+    { type: "dot", x: "42%", y: "48%", size: 10, delay: 5, dur: 13 },
+    { type: "dot", x: "75%", y: "18%", size: 8, delay: 7, dur: 15 },
+    { type: "dot", x: "28%", y: "60%", size: 11, delay: 2, dur: 10 },
+  ], []);
+
   return (
-    <div className="p-4 md:p-6 max-w-4xl mx-auto min-h-screen">
-      <WeightPrompt />
-      <FeedbackModal open={showFeedback} onClose={() => setShowFeedback(false)} />
+    <div className="min-h-screen bg-surface-50 dark:bg-surface-950 relative overflow-hidden">
 
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-        <h1 className="text-2xl md:text-3xl font-extrabold text-gray-800 m-0">
-          Welcome, <span className="text-brand-500">{userProfile?.name || user.displayName || user.email?.split('@')[0]}</span>!
-        </h1>
-        <div className="flex flex-wrap gap-3">
-          <button onClick={() => setShowFeedback(true)} title="Send Feedback" className="px-4 py-2 text-amber-500 border-2 border-amber-200 hover:border-amber-500 hover:bg-amber-50 rounded-xl font-semibold text-sm flex items-center gap-2 transition-all">
-            💬 Feedback
-          </button>
-          <button onClick={() => navigate("/profile")} title="My Profile" className="px-4 py-2 text-brand-600 border-2 border-brand-200 hover:border-brand-500 hover:bg-brand-50 rounded-xl font-semibold text-sm flex items-center gap-2 transition-all">
-            👤 Profile
-          </button>
-          <button onClick={handleLogout} className="px-5 py-2 bg-brand-500 hover:bg-brand-600 text-white border-2 border-transparent rounded-xl font-semibold text-sm transition-all shadow-md hover:shadow-lg">
-            Logout
-          </button>
-        </div>
+      {/* ====== Animated floating UI background ====== */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
+        {/* Base ambient gradient */}
+        <div className="absolute top-0 inset-x-0 h-72 bg-gradient-to-b from-brand-50/40 via-transparent to-transparent dark:from-brand-950/20" />
+        <div className="absolute bottom-0 inset-x-0 h-48 bg-gradient-to-t from-brand-50/20 via-transparent to-transparent dark:from-brand-950/10" />
+
+        {bgElements.map((el, i) => {
+          const common = {
+            position: "absolute",
+            left: el.x,
+            top: el.y,
+          };
+
+          if (el.type === "card") {
+            return (
+              <motion.div
+                key={i}
+                style={{ ...common, width: el.w, height: el.h }}
+                initial={{ opacity: 0, y: 30, rotate: -3 }}
+                animate={{
+                  opacity: [0, 0.18, 0.18, 0],
+                  y: [30, -24, -24, 30],
+                  rotate: [-3, 2, -1, -3],
+                }}
+                transition={{ delay: el.delay, duration: el.dur, repeat: Infinity, ease: "easeInOut" }}
+                className="rounded-xl border border-surface-300/80 dark:border-surface-600/50 bg-white/80 dark:bg-surface-800/60 backdrop-blur-sm shadow-md flex flex-col items-center justify-center"
+              >
+                <span className="text-lg font-bold text-surface-800 dark:text-surface-200/80 tracking-tight">{el.label}</span>
+                <span className="text-[9px] text-surface-500 dark:text-surface-400/70 uppercase tracking-widest mt-0.5">{el.sub}</span>
+              </motion.div>
+            );
+          }
+
+          if (el.type === "bars") {
+            const barHeights = [60, 85, 45, 70, 90, 55, 75];
+            return (
+              <motion.div
+                key={i}
+                style={common}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: [0, 0.22, 0.22, 0] }}
+                transition={{ delay: el.delay, duration: el.dur, repeat: Infinity, ease: "easeInOut" }}
+                className="flex items-end gap-1.5"
+              >
+                {barHeights.map((h, j) => (
+                  <motion.div
+                    key={j}
+                    className="w-3.5 rounded-t bg-brand-500/70 dark:bg-brand-400/60"
+                    initial={{ height: 0 }}
+                    animate={{ height: [0, h * 0.6, h * 0.6, 0] }}
+                    transition={{ delay: el.delay + j * 0.12, duration: el.dur, repeat: Infinity, ease: "easeInOut" }}
+                  />
+                ))}
+              </motion.div>
+            );
+          }
+
+          if (el.type === "ring") {
+            const r = 20;
+            const circ = 2 * Math.PI * r;
+            const offset = circ * (1 - el.pct / 100);
+            return (
+              <motion.div
+                key={i}
+                style={common}
+                initial={{ opacity: 0, scale: 0.7 }}
+                animate={{ opacity: [0, 0.25, 0.25, 0], scale: [0.7, 1.05, 1, 0.7], rotate: [0, 360] }}
+                transition={{ delay: el.delay, duration: el.dur, repeat: Infinity, ease: "easeInOut" }}
+              >
+                <svg width="56" height="56" viewBox="0 0 56 56">
+                  <circle cx="28" cy="28" r={r} fill="none" stroke="currentColor" strokeWidth="3.5"
+                    className="text-surface-300/70 dark:text-surface-600/50" />
+                  <circle cx="28" cy="28" r={r} fill="none" strokeWidth="3.5"
+                    strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round"
+                    className="text-brand-500/80 dark:text-brand-400/70" stroke="currentColor"
+                    transform="rotate(-90 28 28)" />
+                </svg>
+              </motion.div>
+            );
+          }
+
+          if (el.type === "pill") {
+            return (
+              <motion.div
+                key={i}
+                style={common}
+                initial={{ opacity: 0, x: -14 }}
+                animate={{ opacity: [0, 0.3, 0.3, 0], x: [-14, 12, 12, -14] }}
+                transition={{ delay: el.delay, duration: el.dur, repeat: Infinity, ease: "easeInOut" }}
+                className="px-3.5 py-1.5 rounded-full bg-brand-100/80 dark:bg-brand-900/50 border border-brand-300/70 dark:border-brand-700/50 text-[10px] font-semibold text-brand-700/80 dark:text-brand-300/60 tracking-wide shadow-sm"
+              >
+                {el.text}
+              </motion.div>
+            );
+          }
+
+          if (el.type === "dot") {
+            return (
+              <motion.div
+                key={i}
+                style={{ ...common, width: el.size, height: el.size }}
+                initial={{ opacity: 0, scale: 0 }}
+                animate={{ opacity: [0, 0.35, 0.35, 0], scale: [0, 1.4, 1.1, 0] }}
+                transition={{ delay: el.delay, duration: el.dur, repeat: Infinity, ease: "easeInOut" }}
+                className="rounded-full bg-brand-400/60 dark:bg-brand-500/50"
+              />
+            );
+          }
+
+          return null;
+        })}
       </div>
+      {/* ====== End animated background ====== */}
 
-      {/* Tab bar */}
-      <div className="flex overflow-x-auto no-scrollbar mb-8 border-b-2 border-gray-100 pb-1 gap-2">
-        {TABS.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`whitespace-nowrap px-5 py-2.5 text-sm md:text-base font-semibold rounded-t-xl transition-all ${activeTab === tab.key
-                ? "text-brand-600 bg-brand-50 border-b-4 border-brand-500 -mb-[6px]"
-                : "text-gray-500 hover:text-gray-800 hover:bg-gray-50 border-b-4 border-transparent -mb-[6px]"
-              }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      <div className="relative flex min-h-screen">
+        <FeedbackModal open={showFeedback} onClose={() => setShowFeedback(false)} />
 
-      {activeTab === "nutrition" && (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-          <FoodForm />
+        {/* ── Left Sidebar ── */}
+        <motion.aside
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          className="hidden md:flex md:w-56 lg:w-60 flex-col fixed top-0 left-0 h-screen z-20 bg-surface-900/80 backdrop-blur-xl border-r border-surface-800/60"
+        >
+          {/* Logo & brand */}
+          <div className="flex items-center gap-2.5 px-5 pt-5 pb-4">
+            <div className="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center text-white text-[9px] font-bold tracking-tight">FC</div>
+            <span className="text-base font-bold tracking-tight text-surface-50">FoodCal</span>
+          </div>
 
-          <div className="mt-10 mb-8">
-            <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-              <span className="text-2xl">📊</span> Today's Summary
-            </h2>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <motion.div whileHover={{ y: -2 }} className="text-center p-5 bg-orange-50 rounded-2xl border border-orange-100 shadow-sm">
-                <div className="text-sm font-medium text-orange-600/70 mb-1 uppercase tracking-wide">Consumed</div>
-                <div className="text-3xl font-extrabold text-orange-600">{Math.round(totalCalories)}</div>
-                <div className="text-xs text-orange-500/60 font-medium mt-1">kcal</div>
-              </motion.div>
-
-              <motion.div whileHover={{ y: -2 }} className="text-center p-5 bg-green-50 rounded-2xl border border-green-100 shadow-sm">
-                <div className="text-sm font-medium text-green-600/70 mb-1 uppercase tracking-wide">Protein</div>
-                <div className="text-3xl font-extrabold text-green-600">{Math.round(totalProtein)}</div>
-                <div className="text-xs text-green-500/60 font-medium mt-1">grams</div>
-              </motion.div>
-
-              <motion.div whileHover={{ y: -2 }} className="text-center p-5 bg-red-50 rounded-2xl border border-red-100 shadow-sm">
-                <div className="text-sm font-medium text-red-600/70 mb-1 uppercase tracking-wide">Burned</div>
-                <div className="text-3xl font-extrabold text-red-600 flex justify-center items-center gap-1">
-                  <span className="text-xl">🔥</span> {todayCalBurned}
-                </div>
-                <div className="text-xs text-red-500/60 font-medium mt-1">kcal</div>
-              </motion.div>
-
-              <motion.div whileHover={{ y: -2 }} className={`text-center p-5 rounded-2xl border shadow-sm ${todayDeficit >= 0 ? 'bg-emerald-50 border-emerald-200' : 'bg-rose-50 border-rose-200'}`}>
-                <div className={`text-sm font-medium mb-1 uppercase tracking-wide ${todayDeficit >= 0 ? 'text-emerald-700/70' : 'text-rose-700/70'}`}>Deficit</div>
-                <div className={`text-3xl font-extrabold flex justify-center items-center gap-1 ${todayDeficit >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                  <span className="text-xl">{todayDeficit >= 0 ? "↓" : "↑"}</span> {Math.abs(todayDeficit)}
-                </div>
-                <div className={`text-xs font-medium mt-1 ${todayDeficit >= 0 ? 'text-emerald-600/60' : 'text-rose-600/60'}`}>{maintenanceCalories} maint.</div>
-              </motion.div>
+          {/* User info */}
+          <div className="px-5 pb-4 border-b border-surface-800/60">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-full bg-surface-800 flex items-center justify-center text-xs font-bold text-surface-300">
+                {(userProfile?.name || user.displayName || user.email || "?")[0].toUpperCase()}
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-surface-100 truncate">
+                  {userProfile?.name || user.displayName || user.email?.split('@')[0]}
+                </p>
+                <p className="text-[10px] text-surface-500 truncate">{user.email}</p>
+              </div>
             </div>
           </div>
-          <FoodLogEditor onDataChanged={refreshCharts} />
-          <MonthlyNutritionTable allLogs={allFoodLogs} workoutLogs={allWorkoutLogs} maintenanceCalories={maintenanceCalories} />
-          <NutritionChart key={chartKey} allLogs={allFoodLogs} />
-        </motion.div>
-      )}
 
-      {activeTab === "weight" && <WeightHistory />}
+          {/* Navigation tabs */}
+          <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+            {TABS.map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium rounded-lg transition-all ${
+                  activeTab === tab.key
+                    ? "bg-brand-600/20 text-brand-400 shadow-sm"
+                    : "text-surface-400 hover:text-surface-200 hover:bg-surface-800/60"
+                }`}
+              >
+                <span className="text-sm">{tab.icon}</span>
+                {tab.label}
+                {activeTab === tab.key && (
+                  <motion.div
+                    layoutId="sidebar-indicator"
+                    className="ml-auto w-1 h-4 rounded-full bg-brand-500"
+                    transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                  />
+                )}
+              </button>
+            ))}
+          </nav>
 
-      {activeTab === "workout" && <WorkoutTab allFoodLogs={allFoodLogs} maintenanceCalories={maintenanceCalories} />}
+          {/* Bottom actions */}
+          <div className="px-3 pb-4 space-y-1 border-t border-surface-800/60 pt-3">
+            <button onClick={() => setShowFeedback(true)} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-surface-400 hover:text-surface-200 hover:bg-surface-800/60 rounded-lg transition-all">
+              <span className="text-sm">💬</span> Feedback
+            </button>
+            <button onClick={() => navigate("/profile")} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-surface-400 hover:text-surface-200 hover:bg-surface-800/60 rounded-lg transition-all">
+              <span className="text-sm">👤</span> Profile
+            </button>
+            <button onClick={handleLogout} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-red-400/70 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all">
+              <span className="text-sm">🚪</span> Log out
+            </button>
+          </div>
+        </motion.aside>
 
-      {activeTab === "coach" && (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-          <AICoach allFoodLogs={allFoodLogs} allWorkoutLogs={allWorkoutLogs} maintenanceCalories={maintenanceCalories} />
-          <PromptGenerator />
-        </motion.div>
-      )}
+        {/* ── Mobile top bar ── */}
+        <div className="md:hidden fixed top-0 left-0 right-0 z-20 bg-surface-950/90 backdrop-blur-xl border-b border-surface-800/60">
+          <div className="flex items-center justify-between px-4 py-2.5">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-brand-600 flex items-center justify-center text-white text-[8px] font-bold">FC</div>
+              <span className="text-sm font-bold text-surface-50">FoodCal</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <button onClick={() => navigate("/profile")} className="p-1.5 text-surface-500 hover:text-surface-100 rounded-md transition-all text-xs">👤</button>
+              <button onClick={handleLogout} className="px-2 py-1 text-[10px] font-medium text-surface-400 border border-surface-700/50 rounded-md transition-all">Log out</button>
+            </div>
+          </div>
+          {/* Mobile tab bar */}
+          <div className="flex overflow-x-auto no-scrollbar gap-0.5 px-3 pb-2">
+            {TABS.map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={`whitespace-nowrap flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium transition-all rounded-md ${
+                  activeTab === tab.key
+                    ? "bg-surface-800/80 text-surface-50 shadow-sm"
+                    : "text-surface-500 hover:text-surface-300"
+                }`}
+              >
+                <span>{tab.icon}</span> {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
 
-      {activeTab === "reports" && <EmailSettings />}
+        {/* ── Main content area ── */}
+        <div className="flex-1 md:ml-56 lg:ml-60 pt-[88px] md:pt-0">
+          <div className="max-w-4xl mx-auto px-4 md:px-6 py-4 md:py-6">
+
+        <AnimatePresence mode="wait">
+        {activeTab === "nutrition" && (
+          <motion.div key="nutrition" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}>
+            <FoodForm />
+
+            <div className="mt-6 mb-5">
+              <h2 className="text-[10px] font-semibold text-surface-400 dark:text-surface-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                <span className="w-1 h-1 rounded-full bg-brand-500" />
+                Today's summary
+              </h2>
+
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+                {/* Consumed */}
+                <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05, duration: 0.4, ease: [0.16, 1, 0.3, 1] }} className="rounded-lg border border-surface-200/40 dark:border-surface-700/40 bg-white/50 dark:bg-surface-900/50 backdrop-blur-md p-3 relative overflow-hidden">
+                  <div className="absolute top-0 left-0 h-full w-0.5 bg-orange-400 rounded-l-lg" />
+                  <div className="text-[9px] font-semibold text-surface-400 dark:text-surface-500 mb-1 uppercase tracking-widest">Consumed</div>
+                  <div className="text-xl font-extrabold text-surface-900 dark:text-surface-50 tracking-tight">{Math.round(totalCalories)}</div>
+                  <div className="text-[9px] text-surface-400 dark:text-surface-500 mt-0.5 font-medium">
+                    {userProfile?.dailyCalorieTarget ? `of ${userProfile.dailyCalorieTarget} kcal` : 'kcal'}
+                  </div>
+                  {userProfile?.dailyCalorieTarget > 0 && (
+                    <div className="mt-1.5 h-0.5 bg-surface-100/60 dark:bg-surface-800/60 rounded-full overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${Math.min((totalCalories / userProfile.dailyCalorieTarget) * 100, 100)}%` }}
+                        transition={{ delay: 0.3, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                        className={`h-full rounded-full ${(totalCalories / userProfile.dailyCalorieTarget) > 1 ? 'bg-red-500' : 'bg-orange-400'}`}
+                      />
+                    </div>
+                  )}
+                </motion.div>
+
+                {/* Protein */}
+                <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.4, ease: [0.16, 1, 0.3, 1] }} className="rounded-lg border border-surface-200/40 dark:border-surface-700/40 bg-white/50 dark:bg-surface-900/50 backdrop-blur-md p-3 relative overflow-hidden">
+                  <div className="absolute top-0 left-0 h-full w-0.5 bg-blue-400 rounded-l-lg" />
+                  <div className="text-[9px] font-semibold text-surface-400 dark:text-surface-500 mb-1 uppercase tracking-widest">Protein</div>
+                  <div className="text-xl font-extrabold text-surface-900 dark:text-surface-50 tracking-tight">{Math.round(totalProtein)}</div>
+                  <div className="text-[9px] text-surface-400 dark:text-surface-500 mt-0.5 font-medium">g today</div>
+                </motion.div>
+
+                {/* Burned */}
+                <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15, duration: 0.4, ease: [0.16, 1, 0.3, 1] }} className="rounded-lg border border-surface-200/40 dark:border-surface-700/40 bg-white/50 dark:bg-surface-900/50 backdrop-blur-md p-3 relative overflow-hidden">
+                  <div className="absolute top-0 left-0 h-full w-0.5 bg-green-400 rounded-l-lg" />
+                  <div className="text-[9px] font-semibold text-surface-400 dark:text-surface-500 mb-1 uppercase tracking-widest">Burned</div>
+                  <div className="text-xl font-extrabold text-surface-900 dark:text-surface-50 tracking-tight">{todayCalBurned}</div>
+                  <div className="text-[9px] text-surface-400 dark:text-surface-500 mt-0.5 font-medium">kcal workouts</div>
+                </motion.div>
+
+                {/* Net Deficit */}
+                <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.4, ease: [0.16, 1, 0.3, 1] }} className="rounded-lg border border-surface-200/40 dark:border-surface-700/40 bg-white/50 dark:bg-surface-900/50 backdrop-blur-md p-3 relative overflow-hidden">
+                  <div className={`absolute top-0 left-0 h-full w-0.5 rounded-l-lg ${todayDeficit >= 0 ? 'bg-brand-500' : 'bg-red-500'}`} />
+                  <div className="text-[9px] font-semibold text-surface-400 dark:text-surface-500 mb-1 uppercase tracking-widest">Net deficit</div>
+                  <div className={`text-xl font-extrabold tracking-tight ${todayDeficit >= 0 ? 'text-brand-600 dark:text-brand-400' : 'text-red-600 dark:text-red-400'}`}>
+                    {todayDeficit >= 0 ? '' : '+'}{Math.abs(todayDeficit)}
+                  </div>
+                  <div className="text-[9px] text-surface-400 dark:text-surface-500 mt-0.5 font-medium">{maintenanceCalories} maint.</div>
+                </motion.div>
+              </div>
+            </div>
+            <FoodLogEditor onDataChanged={refreshCharts} />
+            <MonthlyNutritionTable allLogs={allFoodLogs} workoutLogs={allWorkoutLogs} maintenanceCalories={maintenanceCalories} />
+            <NutritionChart key={chartKey} allLogs={allFoodLogs} />
+          </motion.div>
+        )}
+
+        {activeTab === "weight" && (
+          <motion.div key="weight" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}>
+            <WeightHistory />
+          </motion.div>
+        )}
+
+        {activeTab === "workout" && (
+          <motion.div key="workout" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}>
+            <WorkoutTab allFoodLogs={allFoodLogs} maintenanceCalories={maintenanceCalories} />
+          </motion.div>
+        )}
+
+        {activeTab === "coach" && (
+          <motion.div key="coach" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}>
+            <AICoach allFoodLogs={allFoodLogs} allWorkoutLogs={allWorkoutLogs} maintenanceCalories={maintenanceCalories} />
+            <PromptGenerator />
+          </motion.div>
+        )}
+
+        {activeTab === "reports" && (
+          <motion.div key="reports" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}>
+            <EmailSettings />
+          </motion.div>
+        )}
+        </AnimatePresence>
+
+          </div>
+        </div>
+        {/* End main content */}
+
+      </div>
     </div>
   );
 };

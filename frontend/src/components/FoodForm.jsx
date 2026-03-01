@@ -4,10 +4,15 @@ import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import API_URL from "../config";
 
-const btn = (bg, extra = {}) => ({ padding: "10px 20px", background: bg, color: "white", border: "none", borderRadius: "5px", cursor: "pointer", ...extra });
-const inp = (extra = {}) => ({ width: "100%", padding: "10px", marginBottom: "10px", borderRadius: "5px", border: "1px solid #ddd", ...extra });
-const smallInp = (extra = {}) => ({ flex: "1", padding: "8px", borderRadius: "4px", border: "1px solid #ddd", ...extra });
-const selectStyle = (extra = {}) => ({ padding: "10px", marginBottom: "10px", borderRadius: "5px", border: "1px solid #ddd", background: "#fff", fontSize: "14px", cursor: "pointer", ...extra });
+const btnCls = "px-3 py-1.5 rounded-md font-semibold text-xs transition-all cursor-pointer text-white";
+const btnPrimary = `${btnCls} bg-surface-900 dark:bg-surface-100 dark:text-surface-900 hover:bg-surface-800 dark:hover:bg-surface-200`;
+const btnGreen = `${btnCls} bg-brand-600 hover:bg-brand-700`;
+const btnBlue = `${btnCls} bg-blue-600 hover:bg-blue-700`;
+const btnRed = `${btnCls} bg-red-500 hover:bg-red-600`;
+const btnDisabled = `${btnCls} bg-surface-300 dark:bg-surface-600 cursor-not-allowed`;
+const inpCls = "w-full px-3 py-2 mb-2 rounded-md border border-surface-200/60 dark:border-surface-700/60 bg-white/70 dark:bg-surface-800/70 backdrop-blur-sm text-surface-900 dark:text-surface-100 text-sm outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20 transition-all placeholder:text-surface-400";
+const smallInpCls = "flex-1 px-2 py-1.5 rounded-md border border-surface-200/60 dark:border-surface-700/60 bg-white/70 dark:bg-surface-800/70 backdrop-blur-sm text-surface-900 dark:text-surface-100 text-xs outline-none focus:border-brand-500 transition-all placeholder:text-surface-400";
+const selectCls = "px-3 py-2 mb-2 rounded-md border border-surface-200/60 dark:border-surface-700/60 bg-white/70 dark:bg-surface-800/70 backdrop-blur-sm text-surface-900 dark:text-surface-100 text-sm cursor-pointer outline-none focus:border-brand-500 transition-all";
 
 const MEAL_TYPES = ["Breakfast", "Lunch", "Evening Snacks", "Dinner", "Late Night", "Others"];
 
@@ -126,7 +131,6 @@ const FoodForm = () => {
       const res = await fetch(`${API_URL}/analyze-food`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: aiText }) });
       const data = await res.json();
       if (data.note) {
-        // Server returned a note (quota issue, fallback, etc) — show it but still display any items
         if (!data.items?.length) { alert(data.note); setAiLoading(false); return; }
       }
       if (!res.ok && !data.items?.length) throw new Error(data.error || data.details || "Failed to analyze food");
@@ -156,10 +160,7 @@ const FoodForm = () => {
       const totalPro = Math.round(items.reduce((s, i) => s + i.protein, 0) * 10) / 10;
       const combinedName = items.map((i) => i.name).join(", ");
       await addDoc(collection(db, "users", user.uid, "foodLogs"), {
-        itemName: combinedName,
-        items,
-        calories: totalCal,
-        protein: totalPro,
+        itemName: combinedName, items, calories: totalCal, protein: totalPro,
         quantity: `${items.length} item${items.length !== 1 ? "s" : ""}`,
         mealType, date: today, createdAt: serverTimestamp(),
       });
@@ -208,82 +209,96 @@ const FoodForm = () => {
     setConfirmationData({ ...confirmationData, items, totals: recalcTotals(items) });
   };
 
-  const delBtn = btn("#f44336", { padding: "8px 12px", borderRadius: "4px" });
-
   return (
-    <div>
-      <h2>Add Food Log</h2>
-      <div>
-        <hr />
-        <div style={{ marginBottom: "15px" }}>
-          <label style={{ fontWeight: "600", marginRight: "10px", color: "#333" }}>🍽️ Meal Type:</label>
-          <select value={mealType} onChange={(e) => setMealType(e.target.value)} style={selectStyle({ width: "auto", minWidth: "160px" })}>
+    <div className="rounded-xl border border-surface-200/50 dark:border-surface-700/50 bg-white/50 dark:bg-surface-900/50 backdrop-blur-md p-3 md:p-4">
+      <h2 className="text-sm font-bold text-surface-900 dark:text-surface-50 mb-3 flex items-center gap-2">
+        <span className="w-1 h-1 rounded-full bg-brand-500" />Add Food
+      </h2>
+
+      <div className="space-y-3">
+        {/* Meal type */}
+        <div className="flex items-center gap-2">
+          <label className="text-xs font-semibold text-surface-500 dark:text-surface-400">Meal</label>
+          <select value={mealType} onChange={(e) => setMealType(e.target.value)} className={`${selectCls} mb-0 min-w-[140px] text-xs py-1.5`}>
             {MEAL_TYPES.map((m) => <option key={m} value={m}>{m}</option>)}
           </select>
         </div>
-        <hr />
-        <h3>📸 AI Food Analysis - Upload or Camera</h3>
-        <div style={{ marginBottom: "20px" }}>
-          <div style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
-            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageSelect} style={{ display: "none" }} />
-            <button onClick={() => fileInputRef.current?.click()} style={btn("#4CAF50")}>📁 Choose Image</button>
-            <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" onChange={handleImageSelect} style={{ display: "none" }} />
-            <button onClick={() => cameraInputRef.current?.click()} style={btn("#2196F3")}>📷 Take Photo</button>
+
+        <div className="border-t border-surface-200/30 dark:border-surface-700/30" />
+
+        {/* Image analysis */}
+        <div>
+          <h3 className="text-xs font-semibold text-surface-500 dark:text-surface-400 uppercase tracking-wider mb-2">AI Image Analysis</h3>
+          <div className="flex flex-wrap gap-1.5 mb-2">
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageSelect} className="hidden" />
+            <button onClick={() => fileInputRef.current?.click()} className={btnGreen}>Choose Image</button>
+            <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" onChange={handleImageSelect} className="hidden" />
+            <button onClick={() => cameraInputRef.current?.click()} className={btnBlue}>Take Photo</button>
             {imageFile && (<>
-              <button onClick={analyzeImage} disabled={imageLoading} style={btn(imageLoading ? "#ccc" : "#667eea", { cursor: imageLoading ? "not-allowed" : "pointer" })}>{imageLoading ? "Analyzing..." : "🔍 Analyze"}</button>
-              <button onClick={clearImage} style={btn("#f44336")}>✕ Clear</button>
+              <button onClick={analyzeImage} disabled={imageLoading} className={imageLoading ? btnDisabled : btnPrimary}>{imageLoading ? "Analyzing..." : "Analyze"}</button>
+              <button onClick={clearImage} className={btnRed}>Clear</button>
             </>)}
           </div>
-          {imagePreview && <div style={{ marginTop: "10px" }}><img src={imagePreview} alt="Food preview" style={{ maxWidth: "300px", maxHeight: "300px", borderRadius: "8px", border: "2px solid #ddd" }} /></div>}
+          {imagePreview && <img src={imagePreview} alt="Food preview" className="max-w-[200px] max-h-[200px] rounded-md border border-surface-200/50 dark:border-surface-700/50 mt-1" />}
         </div>
-        <hr />
-        <h3>✍️ AI Food Entry - Text Input</h3>
-        <input placeholder="e.g. 2 rotis and 1 bowl dal" value={aiText} onChange={(e) => setAiText(e.target.value)} style={inp()} />
-        <button onClick={analyzeFood} disabled={aiLoading} style={btn(aiLoading ? "#ccc" : "#667eea", { marginBottom: "10px", cursor: aiLoading ? "not-allowed" : "pointer" })}>{aiLoading ? "Analyzing..." : "🔍 Analyze"}</button>
 
+        <div className="border-t border-surface-200/30 dark:border-surface-700/30" />
+
+        {/* Text analysis */}
+        <div>
+          <h3 className="text-xs font-semibold text-surface-500 dark:text-surface-400 uppercase tracking-wider mb-2">AI Text Analysis</h3>
+          <input placeholder="e.g. 2 rotis and 1 bowl dal" value={aiText} onChange={(e) => setAiText(e.target.value)} className={inpCls} />
+          <button onClick={analyzeFood} disabled={aiLoading} className={`${aiLoading ? btnDisabled : btnPrimary} mb-1`}>{aiLoading ? "Analyzing..." : "Analyze"}</button>
+        </div>
+
+        {/* Confirmation panel */}
         {confirmationData && (
-          <div style={{ marginTop: "20px", padding: "15px", background: "#f9f9f9", borderRadius: "8px", border: "2px solid #667eea" }}>
-            <h4>✅ Confirm Before Saving</h4>
-            <p style={{ fontSize: "14px", color: "#666" }}>{confirmationData.needsNutritionCalculation ? "Review detected items and adjust quantities if needed. Click 'Calculate Nutrition' to get calories and protein." : "Review and edit all details before saving to your database"}</p>
+          <div className="p-3 bg-white/40 dark:bg-surface-800/40 backdrop-blur-sm rounded-lg border border-brand-500/20">
+            <h4 className="text-xs font-bold text-surface-900 dark:text-surface-100 mb-0.5">Confirm Before Saving</h4>
+            <p className="text-[10px] text-surface-500 dark:text-surface-400 mb-2">{confirmationData.needsNutritionCalculation ? "Review items, adjust quantities, then Calculate." : "Review and edit before saving."}</p>
             {confirmationData.items.map((itm, i) => (
-              <div key={i} style={{ background: "white", padding: "10px", marginBottom: "10px", borderRadius: "5px", border: "1px solid #ddd" }}>
-                <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
+              <div key={i} className="bg-white dark:bg-surface-800 p-3 mb-2 rounded-lg border border-surface-200 dark:border-surface-700">
+                <div className="flex gap-2 flex-wrap items-center">
                   {confirmationData.needsNutritionCalculation ? (<>
-                    <div style={{ flex: "2", padding: "8px", borderRadius: "4px", border: "1px solid #ddd", background: "#f5f5f5", color: "#333" }}>{itm.name}</div>
-                    <input placeholder="Quantity" value={itm.quantity} onChange={(e) => updateConfirmationItem(i, "quantity", e.target.value)} style={smallInp({ border: "1px solid #667eea" })} />
-                    <button onClick={() => removeConfirmationItem(i)} style={delBtn}>🗑️</button>
+                    <div className="flex-[2] px-2 py-1.5 rounded border border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-900 text-sm text-surface-900 dark:text-surface-100">{itm.name}</div>
+                    <input placeholder="Quantity" value={itm.quantity} onChange={(e) => updateConfirmationItem(i, "quantity", e.target.value)} className={`${smallInpCls} border-brand-500`} />
+                    <button onClick={() => removeConfirmationItem(i)} className="px-2.5 py-1.5 rounded bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors border border-red-200 dark:border-red-800">Remove</button>
                   </>) : (<>
-                    <div style={{ flex: "2", display: "flex", alignItems: "center", gap: "5px" }}>
-                      <input placeholder="Food name" value={itm.name} onChange={(e) => updateConfirmationItem(i, "name", e.target.value)} style={smallInp()} />
-                      {lookupLoading[i] && <span style={{ fontSize: "12px", color: "#667eea" }}>🔍 Looking up...</span>}
+                    <div className="flex-[2] flex items-center gap-1.5">
+                      <input placeholder="Food name" value={itm.name} onChange={(e) => updateConfirmationItem(i, "name", e.target.value)} className={smallInpCls} />
+                      {lookupLoading[i] && <span className="text-xs text-brand-600 dark:text-brand-400 whitespace-nowrap">Looking up...</span>}
                     </div>
-                    <input placeholder="Quantity" value={itm.quantity} onChange={(e) => updateConfirmationItem(i, "quantity", e.target.value)} style={smallInp()} />
-                    <input type="number" placeholder="Calories" value={itm.calories} onChange={(e) => updateConfirmationItem(i, "calories", e.target.value)} style={smallInp()} />
-                    <input type="number" placeholder="Protein (g)" value={itm.protein} onChange={(e) => updateConfirmationItem(i, "protein", e.target.value)} style={smallInp()} />
-                    <button onClick={() => removeConfirmationItem(i)} style={delBtn}>🗑️</button>
+                    <input placeholder="Quantity" value={itm.quantity} onChange={(e) => updateConfirmationItem(i, "quantity", e.target.value)} className={smallInpCls} />
+                    <input type="number" placeholder="Calories" value={itm.calories} onChange={(e) => updateConfirmationItem(i, "calories", e.target.value)} className={smallInpCls} />
+                    <input type="number" placeholder="Protein (g)" value={itm.protein} onChange={(e) => updateConfirmationItem(i, "protein", e.target.value)} className={smallInpCls} />
+                    <button onClick={() => removeConfirmationItem(i)} className="px-2.5 py-1.5 rounded bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors border border-red-200 dark:border-red-800">Remove</button>
                   </>)}
                 </div>
               </div>
             ))}
-            <div style={{ marginTop: "15px", padding: "10px", background: "#e8f5e9", borderRadius: "5px", fontWeight: "bold" }}>
-              <div>Total Calories: {confirmationData.totals.calories} kcal</div>
-              <div>Total Protein: {confirmationData.totals.protein}g</div>
+            <div className="mt-2 p-2 bg-brand-50/50 dark:bg-brand-900/20 rounded-md border border-brand-200/50 dark:border-brand-800/50 text-xs font-semibold text-surface-900 dark:text-surface-100">
+              <div>Total: {confirmationData.totals.calories} kcal &middot; {confirmationData.totals.protein}g protein</div>
             </div>
-            <div style={{ display: "flex", gap: "10px", marginTop: "15px" }}>
+            <div className="flex gap-1.5 mt-2">
               {confirmationData.needsNutritionCalculation
-                ? <button onClick={calculateNutrition} disabled={saveLoading} style={btn(saveLoading ? "#ccc" : "#667eea", { flex: "1", padding: "12px", fontWeight: "bold", cursor: saveLoading ? "not-allowed" : "pointer" })}>{saveLoading ? "Calculating..." : "🔢 Calculate Nutrition"}</button>
-                : <button onClick={saveAiResults} disabled={saveLoading} style={btn(saveLoading ? "#ccc" : "#4CAF50", { flex: "1", padding: "12px", fontWeight: "bold", cursor: saveLoading ? "not-allowed" : "pointer" })}>{saveLoading ? "Saving..." : "💾 Save All to Database"}</button>}
-              <button onClick={() => setConfirmationData(null)} style={btn("#f44336", { padding: "12px 20px" })}>✕ Cancel</button>
+                ? <button onClick={calculateNutrition} disabled={saveLoading} className={`flex-1 py-1.5 ${saveLoading ? btnDisabled : btnPrimary}`}>{saveLoading ? "Calculating..." : "Calculate Nutrition"}</button>
+                : <button onClick={saveAiResults} disabled={saveLoading} className={`flex-1 py-1.5 ${saveLoading ? btnDisabled : btnGreen}`}>{saveLoading ? "Saving..." : "Save All"}</button>}
+              <button onClick={() => setConfirmationData(null)} className={`${btnRed} px-4`}>Cancel</button>
             </div>
           </div>
         )}
-        <hr />
-        <h3>📝 Manual Food Entry</h3>
-        <input placeholder="Food item (e.g., Chicken Breast)" value={item} onChange={(e) => setItem(e.target.value)} style={inp()} />
-        <input placeholder="Quantity (e.g., 200g)" value={qty} onChange={(e) => setQty(e.target.value)} style={inp()} />
-        <input type="number" placeholder="Calories" value={calories} onChange={(e) => setCalories(e.target.value)} style={inp()} />
-        <input type="number" placeholder="Protein (g)" value={protein} onChange={(e) => setProtein(e.target.value)} style={inp()} />
-        <button onClick={addFood} disabled={loading} style={btn(loading ? "#ccc" : "#667eea", { width: "100%", padding: "12px", fontWeight: "bold", cursor: loading ? "not-allowed" : "pointer" })}>{loading ? "Adding..." : "➕ Add Food"}</button>
+
+        <div className="border-t border-surface-200/30 dark:border-surface-700/30" />
+
+        {/* Manual entry */}
+        <div>
+          <h3 className="text-xs font-semibold text-surface-500 dark:text-surface-400 uppercase tracking-wider mb-2">Manual Entry</h3>
+          <input placeholder="Food item (e.g., Chicken Breast)" value={item} onChange={(e) => setItem(e.target.value)} className={inpCls} />
+          <input placeholder="Quantity (e.g., 200g)" value={qty} onChange={(e) => setQty(e.target.value)} className={inpCls} />
+          <input type="number" placeholder="Calories" value={calories} onChange={(e) => setCalories(e.target.value)} className={inpCls} />
+          <input type="number" placeholder="Protein (g)" value={protein} onChange={(e) => setProtein(e.target.value)} className={inpCls} />
+          <button onClick={addFood} disabled={loading} className={`w-full py-3 ${loading ? btnDisabled : btnPrimary}`}>{loading ? "Adding..." : "Add Food"}</button>
+        </div>
       </div>
     </div>
   );

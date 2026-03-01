@@ -6,7 +6,7 @@ import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 
 const MEAL_TYPES = ["Breakfast", "Lunch", "Evening Snacks", "Dinner", "Late Night", "Others"];
-const MEAL_COLORS = { Breakfast: "#FF9800", Lunch: "#4CAF50", "Evening Snacks": "#9C27B0", Dinner: "#2196F3", "Late Night": "#607D8B", Others: "#795548" };
+const MEAL_COLORS = { Breakfast: "#FF9800", Lunch: "#4CAF50", "Evening Snacks": "#10b981", Dinner: "#2196F3", "Late Night": "#607D8B", Others: "#795548" };
 
 const FoodLogEditor = ({ onDataChanged }) => {
   const { user } = useAuth();
@@ -222,7 +222,7 @@ const FoodLogEditor = ({ onDataChanged }) => {
             <div key={mt}>
               <div style={{ ...styles.mealHeader, borderLeftColor: MEAL_COLORS[mt] || "#999" }}>
                 <span style={{ fontWeight: "600", color: MEAL_COLORS[mt] || "#999" }}>{mt}</span>
-                <span style={{ fontSize: "12px", color: "#888" }}>
+                <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>
                   {Math.round(items.reduce((s, l) => s + (l.calories || 0), 0))} kcal · {Math.round(items.reduce((s, l) => s + (l.protein || 0), 0) * 10) / 10}g protein
                 </span>
               </div>
@@ -243,19 +243,19 @@ const FoodLogEditor = ({ onDataChanged }) => {
                       {editValues.isGroup ? (
                         /* ---- Group editing (AI/image entries) ---- */
                         <div>
-                          <div style={{ fontSize: "12px", color: "#667eea", fontWeight: "600", marginBottom: "8px" }}>MEAL BLOCK — {editValues.items.length} items</div>
+                          <div style={{ fontSize: "12px", color: "var(--brand)", fontWeight: "600", marginBottom: "8px" }}>MEAL BLOCK — {editValues.items.length} items</div>
                           {editValues.items.map((subItem, si) => (
-                            <div key={si} style={{ padding: "8px", marginBottom: "6px", background: "#f8f9ff", borderRadius: "6px", border: "1px solid #e0e0f0" }}>
+                            <div key={si} style={{ padding: "8px", marginBottom: "6px", background: "var(--bg-card-alt)", borderRadius: "6px", border: "1px solid var(--border)" }}>
                               <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
                                 <input placeholder="Food" value={subItem.name} onChange={(e) => changeGroupItem(si, "name", e.target.value)} style={{ ...styles.editInput, flex: 2, marginBottom: 0 }} />
                                 <input placeholder="Qty" value={subItem.quantity} onChange={(e) => changeGroupItem(si, "quantity", e.target.value)} style={{ ...styles.editInput, flex: 1, marginBottom: 0 }} />
                                 <input type="number" placeholder="Cal" value={subItem.calories} onChange={(e) => changeGroupItem(si, "calories", e.target.value)} style={{ ...styles.editInput, flex: 1, marginBottom: 0 }} />
                                 <input type="number" step="0.1" placeholder="Pro" value={subItem.protein} onChange={(e) => changeGroupItem(si, "protein", e.target.value)} style={{ ...styles.editInput, flex: 1, marginBottom: 0 }} />
-                                <button onClick={() => removeGroupItem(si)} style={{ padding: "6px 10px", border: "1px solid #fdd", borderRadius: "4px", background: "#fff5f5", cursor: "pointer", fontSize: "13px" }}>🗑️</button>
+                                <button onClick={() => removeGroupItem(si)} style={{ padding: "6px 10px", border: "1px solid var(--border)", borderRadius: "4px", background: "var(--glass-surface-btn)", cursor: "pointer", fontSize: "13px" }}>🗑️</button>
                               </div>
                             </div>
                           ))}
-                          <div style={{ fontSize: "12px", color: "#555", marginTop: "6px", padding: "6px 8px", background: "#e8f5e9", borderRadius: "4px" }}>
+                          <div style={{ fontSize: "12px", color: "var(--text-secondary)", marginTop: "6px", padding: "6px 8px", background: "var(--brand-light)", borderRadius: "4px" }}>
                             Block Total: {editValues.items.reduce((s, i) => s + (Number(i.calories) || 0), 0)} kcal · {Math.round(editValues.items.reduce((s, i) => s + (Number(i.protein) || 0), 0) * 10) / 10}g protein
                           </div>
                         </div>
@@ -320,11 +320,11 @@ const FoodLogEditor = ({ onDataChanged }) => {
                       </div>
                       {/* Expanded sub-items for grouped entries */}
                       {log.items && log.items.length > 0 && expandedGroupId === log.id && (
-                        <div style={{ marginTop: "8px", paddingLeft: "20px", borderLeft: "2px solid #667eea" }}>
+                        <div style={{ marginTop: "8px", paddingLeft: "20px", borderLeft: "2px solid var(--brand)" }}>
                           {log.items.map((sub, si) => (
-                            <div key={si} style={{ display: "flex", gap: "12px", padding: "4px 0", fontSize: "13px", color: "#555", borderBottom: "1px solid #f0f0f0" }}>
+                            <div key={si} style={{ display: "flex", gap: "12px", padding: "4px 0", fontSize: "13px", color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>
                               <span style={{ flex: 2, fontWeight: "500" }}>{sub.name}</span>
-                              <span style={{ flex: 1, color: "#888" }}>{sub.quantity}</span>
+                              <span style={{ flex: 1, color: "var(--text-muted)" }}>{sub.quantity}</span>
                               <span style={{ flex: 1, color: "#e65100" }}>{sub.calories} kcal</span>
                               <span style={{ flex: 1, color: "#2e7d32" }}>{sub.protein}g</span>
                             </div>
@@ -344,201 +344,35 @@ const FoodLogEditor = ({ onDataChanged }) => {
 };
 
 const styles = {
-  container: {
-    marginTop: "30px",
-    padding: "20px",
-    background: "#fff",
-    borderRadius: "12px",
-    border: "1px solid #e0e0e0",
-    boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-  },
-  title: {
-    margin: "0 0 15px 0",
-    fontSize: "20px",
-    color: "#333",
-  },
-  dateNav: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: "12px",
-    marginBottom: "15px",
-  },
-  navBtn: {
-    padding: "8px 14px",
-    border: "1px solid #ddd",
-    borderRadius: "6px",
-    background: "#f9f9f9",
-    cursor: "pointer",
-    fontSize: "13px",
-    color: "#555",
-  },
-  dateDisplay: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    gap: "2px",
-  },
-  dateInput: {
-    padding: "6px 10px",
-    borderRadius: "6px",
-    border: "1px solid #ccc",
-    fontSize: "14px",
-    textAlign: "center",
-  },
-  dateLabel: {
-    fontSize: "12px",
-    color: "#888",
-  },
-  totalsRow: {
-    display: "flex",
-    gap: "20px",
-    justifyContent: "center",
-    flexWrap: "wrap",
-    padding: "10px",
-    background: "#f8f9ff",
-    borderRadius: "8px",
-    marginBottom: "15px",
-  },
-  totalItem: {
-    fontSize: "14px",
-    color: "#444",
-  },
-  emptyMsg: {
-    textAlign: "center",
-    color: "#aaa",
-    fontStyle: "italic",
-    padding: "20px 0",
-  },
-  logList: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "10px",
-  },
-  mealHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: "8px 12px",
-    marginTop: "10px",
-    marginBottom: "4px",
-    borderLeft: "3px solid #999",
-    background: "#f5f5f5",
-    borderRadius: "4px",
-    fontSize: "14px",
-  },
-  logCard: {
-    padding: "12px 15px",
-    borderRadius: "8px",
-    border: "1px solid #eee",
-    background: "#fafafa",
-  },
-  // View mode
-  viewRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: "10px",
-  },
-  viewInfo: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "2px",
-    flex: 1,
-    minWidth: 0,
-  },
-  foodName: {
-    fontSize: "15px",
-    fontWeight: "600",
-    color: "#333",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-  },
-  foodMeta: {
-    fontSize: "13px",
-    color: "#777",
-  },
-  viewActions: {
-    display: "flex",
-    gap: "6px",
-    flexShrink: 0,
-  },
-  editBtn: {
-    padding: "6px 10px",
-    border: "1px solid #ddd",
-    borderRadius: "6px",
-    background: "#fff",
-    cursor: "pointer",
-    fontSize: "15px",
-  },
-  deleteBtn: {
-    padding: "6px 10px",
-    border: "1px solid #fdd",
-    borderRadius: "6px",
-    background: "#fff5f5",
-    cursor: "pointer",
-    fontSize: "15px",
-  },
-  // Edit mode
-  editForm: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "10px",
-  },
-  editRow: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "3px",
-  },
-  editRowGroup: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr 1fr",
-    gap: "10px",
-  },
-  editCol: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "3px",
-  },
-  editLabel: {
-    fontSize: "11px",
-    color: "#888",
-    textTransform: "uppercase",
-    letterSpacing: "0.5px",
-  },
-  editInput: {
-    padding: "8px 10px",
-    borderRadius: "6px",
-    border: "1px solid #ccc",
-    fontSize: "14px",
-    width: "100%",
-    boxSizing: "border-box",
-  },
-  editActions: {
-    display: "flex",
-    gap: "8px",
-    marginTop: "4px",
-  },
-  saveBtn: {
-    padding: "8px 18px",
-    border: "none",
-    borderRadius: "6px",
-    background: "#4CAF50",
-    color: "#fff",
-    cursor: "pointer",
-    fontSize: "13px",
-    fontWeight: "600",
-  },
-  cancelBtn: {
-    padding: "8px 18px",
-    border: "1px solid #ddd",
-    borderRadius: "6px",
-    background: "#fff",
-    color: "#666",
-    cursor: "pointer",
-    fontSize: "13px",
-  },
+  container: { marginTop: "20px", padding: "14px", background: "var(--glass-surface)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRadius: "12px", border: "1px solid var(--glass-border-subtle)" },
+  title: { margin: "0 0 10px 0", fontSize: "13px", fontWeight: 700, color: "var(--text)", letterSpacing: "-0.01em" },
+  dateNav: { display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", marginBottom: "10px" },
+  navBtn: { padding: "5px 10px", border: "1px solid var(--border)", borderRadius: "6px", background: "var(--glass-surface-hover)", backdropFilter: "blur(8px)", cursor: "pointer", fontSize: "11px", fontWeight: 600, color: "var(--text-secondary)", transition: "all 0.15s" },
+  dateDisplay: { display: "flex", flexDirection: "column", alignItems: "center", gap: "1px" },
+  dateInput: { padding: "4px 10px", borderRadius: "6px", border: "1px solid var(--border)", fontSize: "12px", textAlign: "center", background: "var(--glass-surface-hover)", color: "var(--text)" },
+  dateLabel: { fontSize: "10px", color: "var(--text-muted)" },
+  totalsRow: { display: "flex", gap: "14px", justifyContent: "center", flexWrap: "wrap", padding: "6px 12px", background: "var(--glass-surface-light)", backdropFilter: "blur(8px)", borderRadius: "8px", marginBottom: "10px", border: "1px solid var(--glass-border-faint)" },
+  totalItem: { fontSize: "12px", color: "var(--text-secondary)" },
+  emptyMsg: { textAlign: "center", color: "var(--text-muted)", fontStyle: "italic", padding: "12px 0", fontSize: "12px" },
+  logList: { display: "flex", flexDirection: "column", gap: "4px" },
+  mealHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "5px 10px", marginTop: "4px", marginBottom: "2px", borderLeft: "3px solid #999", background: "var(--glass-surface-light)", borderRadius: "4px", fontSize: "11px" },
+  logCard: { padding: "8px 10px", borderRadius: "6px", border: "1px solid var(--glass-border-faint)", background: "var(--glass-surface-subtle)", backdropFilter: "blur(6px)", transition: "all 0.15s" },
+  viewRow: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px" },
+  viewInfo: { display: "flex", flexDirection: "column", gap: "1px", flex: 1, minWidth: 0 },
+  foodName: { fontSize: "12px", fontWeight: "600", color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+  foodMeta: { fontSize: "10px", color: "var(--text-muted)" },
+  viewActions: { display: "flex", gap: "3px", flexShrink: 0 },
+  editBtn: { padding: "3px 6px", border: "1px solid var(--border)", borderRadius: "4px", background: "var(--glass-surface-btn)", cursor: "pointer", fontSize: "12px" },
+  deleteBtn: { padding: "3px 6px", border: "1px solid var(--border)", borderRadius: "4px", background: "var(--glass-surface-btn)", cursor: "pointer", fontSize: "12px", color: "var(--text-muted)" },
+  editForm: { display: "flex", flexDirection: "column", gap: "6px" },
+  editRow: { display: "flex", flexDirection: "column", gap: "2px" },
+  editRowGroup: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "6px" },
+  editCol: { display: "flex", flexDirection: "column", gap: "2px" },
+  editLabel: { fontSize: "9px", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 600 },
+  editInput: { padding: "5px 8px", borderRadius: "6px", border: "1px solid var(--border)", fontSize: "12px", width: "100%", boxSizing: "border-box", background: "var(--glass-surface-hover)", color: "var(--text)", transition: "border-color 0.15s", outline: "none" },
+  editActions: { display: "flex", gap: "6px", marginTop: "2px" },
+  saveBtn: { padding: "5px 12px", border: "none", borderRadius: "6px", background: "var(--brand)", color: "#fff", cursor: "pointer", fontSize: "11px", fontWeight: "600" },
+  cancelBtn: { padding: "5px 12px", border: "1px solid var(--border)", borderRadius: "6px", background: "var(--glass-surface-btn)", color: "var(--text-secondary)", cursor: "pointer", fontSize: "11px" },
 };
 
 export default FoodLogEditor;

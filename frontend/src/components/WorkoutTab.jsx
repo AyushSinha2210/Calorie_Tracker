@@ -6,10 +6,10 @@ import { motion } from "framer-motion";
 import API_URL from "../config";
 
 // ── Styles (Tailwind) ──
-const cardCls = "bg-white rounded-2xl p-5 md:p-6 shadow-sm border border-gray-100 mb-6";
-const headingCls = "text-lg font-bold text-gray-800 mb-4 flex items-center gap-2";
-const inpCls = "w-full p-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all text-sm";
-const labelCls = "block text-sm font-semibold text-gray-600 mb-1.5";
+const cardCls = "card p-5 md:p-6 mb-6";
+const headingCls = "text-base font-bold text-surface-900 dark:text-surface-50 mb-4 flex items-center gap-2";
+const inpCls = "w-full p-3 rounded-lg border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 focus:border-brand-500 focus:ring-1 focus:ring-brand-500/20 outline-none transition-all text-sm text-surface-900 dark:text-surface-100 placeholder:text-surface-400";
+const labelCls = "block text-xs font-semibold text-surface-500 dark:text-surface-400 mb-1.5 uppercase tracking-wider";
 
 const CATEGORY_COLORS = {
   Abs: "#e74c3c", Arms: "#3498db", Back: "#27ae60", Calves: "#e67e22",
@@ -319,14 +319,14 @@ const WorkoutTab = ({ allFoodLogs = [], maintenanceCalories = 0 }) => {
             className={inpCls}
           />
           {searching && (
-            <div style={{ position: "absolute", right: 12, top: 30, color: "#999", fontSize: 12 }}>Searching...</div>
+            <div style={{ position: "absolute", right: 12, top: 30, color: "var(--text-muted)", fontSize: 12 }}>Searching...</div>
           )}
 
           {/* Dropdown results */}
           {results.length > 0 && (
             <div style={{
               position: "absolute", top: "100%", left: 0, right: 0, zIndex: 20,
-              background: "#fff", border: "1px solid #ddd", borderRadius: 8,
+              background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 8,
               maxHeight: 280, overflowY: "auto", boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
             }}>
               {results.map((ex) => (
@@ -335,10 +335,10 @@ const WorkoutTab = ({ allFoodLogs = [], maintenanceCalories = 0 }) => {
                   onClick={() => handleSelect(ex)}
                   style={{
                     padding: "10px 14px", cursor: "pointer", display: "flex", alignItems: "center", gap: 10,
-                    borderBottom: "1px solid #f0f0f0", transition: "background 0.15s",
+                    borderBottom: "1px solid var(--border)", transition: "background 0.15s",
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = "#f5f6ff")}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = "#fff")}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-card-alt)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "var(--bg-card)")}
                 >
                   {ex.imageThumbnail && (
                     <img src={ex.imageThumbnail} alt="" style={{ width: 30, height: 30, borderRadius: 4, objectFit: "cover" }} />
@@ -361,7 +361,7 @@ const WorkoutTab = ({ allFoodLogs = [], maintenanceCalories = 0 }) => {
 
         {/* Selected exercise + input type badge */}
         {selected && (
-          <div style={{ marginTop: 12, padding: "10px 14px", background: "#f5f6ff", borderRadius: 8, display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ marginTop: 12, padding: "10px 14px", background: "var(--bg-card-alt)", borderRadius: 8, display: "flex", alignItems: "center", gap: 10 }}>
             {selected.image && (
               <img src={selected.image} alt="" style={{ width: 48, height: 48, borderRadius: 8, objectFit: "cover" }} />
             )}
@@ -378,26 +378,26 @@ const WorkoutTab = ({ allFoodLogs = [], maintenanceCalories = 0 }) => {
                 {inputType && (
                   <span style={{
                     fontSize: 11, padding: "1px 8px", borderRadius: 10, fontWeight: 600,
-                    background: "#667eea15", color: "#667eea",
+                    background: "var(--brand-light)", color: "var(--brand)",
                   }}>
                     {INPUT_TYPE_LABELS[inputType] || inputType}
                   </span>
                 )}
                 {exerciseInfo?.muscles?.length > 0 && (
-                  <span style={{ fontSize: 11, color: "#999" }}>
+                  <span style={{ fontSize: 11, color: "var(--text-muted)" }}>
                     {exerciseInfo.muscles.map(m => m.name).join(", ")}
                   </span>
                 )}
               </div>
             </div>
             <button onClick={() => { setSelected(null); setExerciseInfo(null); setSearch(""); resetInputFields(); }}
-              style={{ marginLeft: "auto", background: "none", border: "none", cursor: "pointer", fontSize: 18, color: "#999" }}>✕</button>
+              style={{ marginLeft: "auto", background: "none", border: "none", cursor: "pointer", fontSize: 18, color: "var(--text-muted)" }}>✕</button>
           </div>
         )}
 
         {/* Loading exercise info */}
         {loadingInfo && (
-          <div style={{ textAlign: "center", padding: "12px 0", color: "#999", fontSize: 13 }}>
+          <div style={{ textAlign: "center", padding: "12px 0", color: "var(--text-muted)", fontSize: 13 }}>
             Loading exercise details...
           </div>
         )}
@@ -494,14 +494,14 @@ const WorkoutTab = ({ allFoodLogs = [], maintenanceCalories = 0 }) => {
         {/* Calorie result */}
         {calcResult && (
           <div style={{
-            marginTop: 14, padding: 16, background: "linear-gradient(135deg, #667eea10, #764ba210)",
-            borderRadius: 10, border: "1px solid #667eea30", textAlign: "center",
+            marginTop: 14, padding: 16, background: "var(--bg-card-alt)",
+            borderRadius: 10, border: "1px solid var(--border)", textAlign: "center",
           }}>
-            <div style={{ fontSize: 13, color: "#888", marginBottom: 4 }}>Estimated Calories Burned</div>
+            <div style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 4 }}>Estimated Calories Burned</div>
             <div style={{ fontSize: 32, fontWeight: 800, color: "#e74c3c" }}>
               🔥 {calcResult.caloriesBurned} kcal
             </div>
-            <div style={{ fontSize: 12, color: "#999", marginTop: 4 }}>
+            <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4 }}>
               MET: {calcResult.met}
               {inputType === "cardio" && <> · {duration} min{distance ? ` · ${distance} km` : ""}</>}
               {inputType === "weighted" && <> · {sets}×{reps} @ {liftedWeight}kg</>}
@@ -531,9 +531,9 @@ const WorkoutTab = ({ allFoodLogs = [], maintenanceCalories = 0 }) => {
         <button
           onClick={handleSave}
           disabled={!selected || !calcResult || saving}
-          className={`w-full mt-4 py-3 rounded-xl font-bold text-white transition-all shadow-md ${!selected || !calcResult || saving ? 'bg-gray-300 cursor-not-allowed shadow-none' : 'bg-gradient-to-r from-brand-500 to-accent-500 hover:shadow-lg hover:-translate-y-0.5'}`}
+          className={`w-full mt-4 py-3 rounded-lg font-semibold transition-all ${!selected || !calcResult || saving ? 'bg-surface-200 dark:bg-surface-700 text-surface-400 dark:text-surface-500 cursor-not-allowed' : 'bg-surface-900 dark:bg-surface-100 text-white dark:text-surface-900 hover:bg-surface-800 dark:hover:bg-surface-200'}`}
         >
-          {saving ? "Saving..." : "💾 Save Workout"}
+          {saving ? "Saving..." : "Save Workout"}
         </button>
       </div>
 
@@ -544,19 +544,19 @@ const WorkoutTab = ({ allFoodLogs = [], maintenanceCalories = 0 }) => {
         </h3>
         <div className="summary-grid">
           <div style={{ textAlign: "center", padding: 12, background: "#fef3f3", borderRadius: 8 }}>
-            <div style={{ fontSize: 12, color: "#999" }}>Calories Burned</div>
+            <div style={{ fontSize: 12, color: "var(--text-muted)" }}>Calories Burned</div>
             <div style={{ fontSize: 24, fontWeight: 800, color: "#e74c3c" }}>🔥 {todayCalBurned}</div>
           </div>
-          <div style={{ textAlign: "center", padding: 12, background: "#f0f4ff", borderRadius: 8 }}>
-            <div style={{ fontSize: 12, color: "#999" }}>Workouts</div>
-            <div style={{ fontSize: 24, fontWeight: 800, color: "#667eea" }}>{todayLogs.length}</div>
+          <div style={{ textAlign: "center", padding: 12, background: "var(--brand-light)", borderRadius: 8 }}>
+            <div style={{ fontSize: 12, color: "var(--text-muted)" }}>Workouts</div>
+            <div style={{ fontSize: 24, fontWeight: 800, color: "var(--brand)" }}>{todayLogs.length}</div>
           </div>
           <div style={{ textAlign: "center", padding: 12, background: "#eafaf1", borderRadius: 8 }}>
-            <div style={{ fontSize: 12, color: "#999" }}>Duration</div>
+            <div style={{ fontSize: 12, color: "var(--text-muted)" }}>Duration</div>
             <div style={{ fontSize: 24, fontWeight: 800, color: "#27ae60" }}>{Math.round(todayDuration)}m</div>
           </div>
           <div style={{ textAlign: "center", padding: 12, background: todayDeficit >= 0 ? "#e8f5e9" : "#fce4ec", borderRadius: 8, border: `2px solid ${todayDeficit >= 0 ? "#4caf50" : "#e74c3c"}30` }}>
-            <div style={{ fontSize: 12, color: "#999" }}>Deficit</div>
+            <div style={{ fontSize: 12, color: "var(--text-muted)" }}>Deficit</div>
             <div style={{ fontSize: 24, fontWeight: 800, color: todayDeficit >= 0 ? "#2e7d32" : "#c62828" }}>
               {todayDeficit >= 0 ? "↓" : "↑"} {Math.abs(todayDeficit)}
             </div>
@@ -567,16 +567,16 @@ const WorkoutTab = ({ allFoodLogs = [], maintenanceCalories = 0 }) => {
           <div className="nutrition-table-wrap" style={{ marginTop: 14 }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, minWidth: 450 }}>
               <thead>
-                <tr style={{ borderBottom: "2px solid #eee" }}>
-                  <th style={{ textAlign: "left", padding: "6px 8px", color: "#888", fontWeight: 600 }}>Exercise</th>
-                  <th style={{ textAlign: "center", padding: "6px 8px", color: "#888", fontWeight: 600 }}>Detail</th>
-                  <th style={{ textAlign: "center", padding: "6px 8px", color: "#888", fontWeight: 600 }}>Calories</th>
-                  <th style={{ textAlign: "center", padding: "6px 8px", color: "#888", fontWeight: 600 }}></th>
+                <tr style={{ borderBottom: "2px solid var(--border)" }}>
+                  <th style={{ textAlign: "left", padding: "6px 8px", color: "var(--text-muted)", fontWeight: 600 }}>Exercise</th>
+                  <th style={{ textAlign: "center", padding: "6px 8px", color: "var(--text-muted)", fontWeight: 600 }}>Detail</th>
+                  <th style={{ textAlign: "center", padding: "6px 8px", color: "var(--text-muted)", fontWeight: 600 }}>Calories</th>
+                  <th style={{ textAlign: "center", padding: "6px 8px", color: "var(--text-muted)", fontWeight: 600 }}></th>
                 </tr>
               </thead>
               <tbody>
                 {todayLogs.map((log) => (
-                  <tr key={log.id} style={{ borderBottom: "1px solid #f0f0f0" }}>
+                  <tr key={log.id} style={{ borderBottom: "1px solid var(--border)" }}>
                     <td style={{ padding: "8px" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         {log.imageThumbnail ? (
@@ -594,13 +594,13 @@ const WorkoutTab = ({ allFoodLogs = [], maintenanceCalories = 0 }) => {
                         </div>
                       </div>
                     </td>
-                    <td style={{ textAlign: "center", fontSize: 12, color: "#555" }}>{formatLogDetail(log)}</td>
+                    <td style={{ textAlign: "center", fontSize: 12, color: "var(--text-secondary)" }}>{formatLogDetail(log)}</td>
                     <td style={{ textAlign: "center", fontWeight: 700, color: "#e74c3c" }}>{log.caloriesBurned}</td>
                     <td style={{ textAlign: "center" }}>
                       <button
                         onClick={() => handleDelete(log.id)}
                         disabled={deleting === log.id}
-                        style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, color: "#ccc" }}
+                        style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, color: "var(--text-muted)" }}
                         title="Delete"
                       >{deleting === log.id ? "…" : "🗑️"}</button>
                     </td>
@@ -618,7 +618,7 @@ const WorkoutTab = ({ allFoodLogs = [], maintenanceCalories = 0 }) => {
           <span className="text-2xl">📅</span> Workout History (60 Days)
         </h3>
         {logsByDate.length === 0 ? (
-          <p style={{ color: "#999", textAlign: "center", padding: "20px 0" }}>No workouts logged yet. Start by searching for an exercise above!</p>
+          <p style={{ color: "var(--text-muted)", textAlign: "center", padding: "20px 0" }}>No workouts logged yet. Start by searching for an exercise above!</p>
         ) : (
           <div>
             {logsByDate.map(([date, logs]) => {
@@ -628,19 +628,19 @@ const WorkoutTab = ({ allFoodLogs = [], maintenanceCalories = 0 }) => {
                 <div key={date} style={{ marginBottom: 16 }}>
                   <div style={{
                     display: "flex", justifyContent: "space-between", alignItems: "center",
-                    padding: "8px 0", borderBottom: "2px solid #667eea20",
+                    padding: "8px 0", borderBottom: "2px solid var(--border)",
                   }}>
-                    <div style={{ fontWeight: 700, color: "#333" }}>{date}</div>
+                    <div style={{ fontWeight: 700, color: "var(--text)" }}>{date}</div>
                     <div style={{ display: "flex", gap: 14, fontSize: 13 }}>
                       <span style={{ color: "#e74c3c", fontWeight: 600 }}>🔥 {totalCal} kcal</span>
-                      <span style={{ color: "#667eea", fontWeight: 600 }}>⏱ {Math.round(totalMin)}m</span>
-                      <span style={{ color: "#999" }}>{logs.length} exercise{logs.length > 1 ? "s" : ""}</span>
+                      <span style={{ color: "var(--brand)", fontWeight: 600 }}>⏱ {Math.round(totalMin)}m</span>
+                      <span style={{ color: "var(--text-muted)" }}>{logs.length} exercise{logs.length > 1 ? "s" : ""}</span>
                     </div>
                   </div>
                   <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
                     <tbody>
                       {logs.map((log) => (
-                        <tr key={log.id} style={{ borderBottom: "1px solid #f5f5f5" }}>
+                        <tr key={log.id} style={{ borderBottom: "1px solid var(--border)" }}>
                           <td style={{ padding: "6px 8px" }}>
                             <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
                               {log.imageThumbnail ? (
@@ -656,13 +656,13 @@ const WorkoutTab = ({ allFoodLogs = [], maintenanceCalories = 0 }) => {
                               }}>{log.category}</span>
                             </div>
                           </td>
-                          <td style={{ textAlign: "center", padding: "6px 8px", color: "#888", fontSize: 12 }}>{formatLogDetail(log)}</td>
+                          <td style={{ textAlign: "center", padding: "6px 8px", color: "var(--text-muted)", fontSize: 12 }}>{formatLogDetail(log)}</td>
                           <td style={{ textAlign: "right", padding: "6px 8px", fontWeight: 700, color: "#e74c3c" }}>{log.caloriesBurned} kcal</td>
                           <td style={{ textAlign: "center", width: 30 }}>
                             <button
                               onClick={() => handleDelete(log.id)}
                               disabled={deleting === log.id}
-                              style={{ background: "none", border: "none", cursor: "pointer", fontSize: 14, color: "#ccc" }}
+                              style={{ background: "none", border: "none", cursor: "pointer", fontSize: 14, color: "var(--text-muted)" }}
                             >{deleting === log.id ? "…" : "🗑️"}</button>
                           </td>
                         </tr>

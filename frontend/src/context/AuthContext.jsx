@@ -34,7 +34,7 @@ export const AuthProvider = ({ children }) => {
 
   // Listen to user doc for profileComplete flag
   useEffect(() => {
-    if (!user) { setProfileLoading(false); return; }
+    if (!user) return; // Don't touch profileLoading here — first effect handles logout
     setProfileLoading(true);
     const unsub = onSnapshot(doc(db, "users", user.uid), (snap) => {
       const data = snap.data();

@@ -322,7 +322,7 @@ function buildEmailHtml(frequency, displayName, weightLogs, foodLogs, workoutLog
   </head><body>
 <div class="container">
   <div class="header">
-    <h1>🏋️ Fitness Tracker Report</h1>
+    <h1>🏋️ FoodCal Report</h1>
     <p><span class="badge ${badgeCls}">${freqLabel}</span> &nbsp; ${dateRange.start}${dateRange.start !== dateRange.end ? " → " + dateRange.end : ""}</p>
   </div>
 
@@ -355,7 +355,7 @@ function buildEmailHtml(frequency, displayName, weightLogs, foodLogs, workoutLog
   </div>
 
   <div class="footer">
-    You're receiving this because you subscribed to ${frequency} reports on AI Food &amp; Fitness Tracker.<br/>
+    You're receiving this because you subscribed to ${frequency} reports on FoodCal.<br/>
     To change frequency or unsubscribe, update your settings in the app.
   </div>
 </div>
@@ -395,9 +395,9 @@ export async function sendReportForUser(uid, email, displayName, frequency) {
   const html = buildEmailHtml(frequency, displayName, weightLogs, foodLogs, workoutLogs, { start, end }, maintenanceCalories);
 
   await getTransporter().sendMail({
-    from: `"Fitness Tracker" <${process.env.EMAIL_USER}>`,
+    from: `"FoodCal" <${process.env.EMAIL_USER}>`,
     to: email,
-    subject: `${freqLabel} Fitness Report (${start}${start !== end ? " – " + end : ""})`,
+    subject: `${freqLabel} FoodCal Report (${start}${start !== end ? " – " + end : ""})`,
     html,
   });
   console.log(`[EMAIL] Sent ${frequency} report to ${email}`);
@@ -418,9 +418,9 @@ export async function sendOnDemandReportWithData({ email, displayName, frequency
   const html = buildEmailHtml(frequency || "weekly", displayName, weightLogs || [], foodLogs || [], workoutLogs || [], { start, end }, maintenanceCalories || 0);
 
   await getTransporter().sendMail({
-    from: `"Fitness Tracker" <${process.env.EMAIL_USER}>`,
+    from: `"FoodCal" <${process.env.EMAIL_USER}>`,
     to: email,
-    subject: `${freqLabel} Fitness Report (${start}${start !== end ? " – " + end : ""})`,
+    subject: `${freqLabel} FoodCal Report (${start}${start !== end ? " – " + end : ""})`,
     html,
   });
   console.log(`[EMAIL] Sent ${frequency || "weekly"} on-demand report (with client data) to ${email}`);
@@ -512,7 +512,7 @@ function buildWeightReminderHtml(displayName, daysSince) {
     </p>
     <div style="margin-top:32px;">
       <a href="https://fitness-tracker-app.com" style="display:inline-block; padding:14px 36px; background:linear-gradient(135deg, #667eea, #764ba2); color:#ffffff; border-radius:12px; text-decoration:none; font-weight:700; font-size:16px; box-shadow: 0 4px 6px -1px rgba(102, 126, 234, 0.4);">
-        Open Fitness Tracker
+        Open FoodCal
       </a>
     </div>
   </div>
@@ -575,7 +575,7 @@ async function checkAndSendWeightReminders() {
       const displayName = data.displayName || data.name || "";
       const html = buildWeightReminderHtml(displayName, daysSince);
       await getTransporter().sendMail({
-        from: `"Fitness Tracker" <${process.env.EMAIL_USER}>`,
+        from: `"FoodCal" <${process.env.EMAIL_USER}>`,
         to: email,
         subject: `⚖️ Time to log your weight${daysSince ? ` (${daysSince} days since last entry)` : ""}`,
         html,
