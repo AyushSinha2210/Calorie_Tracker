@@ -1,24 +1,23 @@
 import admin from "firebase-admin";
-import { Resend } from "resend";
+import sgMail from "@sendgrid/mail";
 import cron from "node-cron";
 
-// ── Resend email client ──
-let resend = null;
+// ── SendGrid email client ──
+let sgConfigured = false;
 
-function getResend() {
-  if (resend) return resend;
-  const key = process.env.RESEND_API_KEY;
-  if (!key) throw new Error("RESEND_API_KEY must be set in env");
-  resend = new Resend(key);
-  return resend;
+function ensureSendGrid() {
+  if (sgConfigured) return;
+  const key = process.env.SENDGRID_API_KEY;
+  if (!key) throw new Error("SENDGRID_API_KEY must be set in env");
+  sgMail.setApiKey(key);
+  sgConfigured = true;
 }
 
-/** Send an email via Resend */
+/** Send an email via SendGrid */
 async function sendEmail({ to, subject, html }) {
-  const r = getResend();
-  const fromAddr = process.env.EMAIL_FROM || "FoodCal <onboarding@resend.dev>";
-  const { error } = await r.emails.send({ from: fromAddr, to, subject, html });
-  if (error) throw new Error(error.message || JSON.stringify(error));
+  ensureSendGrid();
+  const fromAddr = process.env.EMAIL_FROM || "foodcal.ai.health@gmail.com";
+  await sgMail.send({ from: fromAddr, to, subject, html });
 }
 
 // ── Firestore helpers ──
@@ -598,8 +597,8 @@ async function checkAndSendWeightReminders() {
 
 // ── Cron schedule: runs every minute ──
 export function scheduleEmailReports() {
-  if (!process.env.RESEND_API_KEY) {
-    console.log("[EMAIL] Skipped - RESEND_API_KEY not set.");
+  if (!process.env.SENDGRID_API_KEY) {
+    console.log("[EMAIL] Skipped - SENDGRID_API_KEY not set.");
     return;
   }
 
