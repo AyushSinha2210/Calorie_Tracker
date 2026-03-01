@@ -1,24 +1,41 @@
 import admin from "firebase-admin";
 import nodemailer from "nodemailer";
+import dns from "node:dns/promises";
 import cron from "node-cron";
 
 // ── Email transporter (Gmail App Password) ──
 let transporter = null;
 
-function getTransporter() {
+/**
+ * Resolve smtp.gmail.com to an IPv4 address, then build the transport
+ * with a raw IP so Node never attempts an IPv6 connection.
+ */
+async function getTransporter() {
   if (transporter) return transporter;
   const user = process.env.EMAIL_USER;
   const pass = process.env.EMAIL_APP_PASSWORD;
   if (!user || !pass) throw new Error("EMAIL_USER and EMAIL_APP_PASSWORD must be set in .env");
+
+  // Resolve to IPv4 explicitly — Render free tier has no IPv6 connectivity
+  let host = "smtp.gmail.com";
+  try {
+    const addrs = await dns.resolve4("smtp.gmail.com");
+    if (addrs.length) host = addrs[0]; // e.g. "142.250.115.108"
+    console.log(`[EMAIL] Resolved smtp.gmail.com → ${host}`);
+  } catch (e) {
+    console.warn("[EMAIL] IPv4 resolve failed, falling back to hostname:", e.message);
+  }
+
   transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
+    host,
     port: 587,
     secure: false,
     auth: { user, pass },
     requireTLS: true,
-    connectionTimeout: 30000,   // 30s to establish TCP connection
-    greetingTimeout: 30000,     // 30s for SMTP greeting
-    socketTimeout: 60000,       // 60s for socket inactivity
+    tls: { servername: "smtp.gmail.com" }, // for TLS certificate validation
+    connectionTimeout: 30000,
+    greetingTimeout: 30000,
+    socketTimeout: 60000,
   });
   return transporter;
 }
@@ -400,7 +417,8 @@ export async function sendReportForUser(uid, email, displayName, frequency) {
   const freqLabel = frequency.charAt(0).toUpperCase() + frequency.slice(1);
   const html = buildEmailHtml(frequency, displayName, weightLogs, foodLogs, workoutLogs, { start, end }, maintenanceCalories);
 
-  await getTransporter().sendMail({
+  const mailer = await getTransporter();
+  await mailer.sendMail({
     from: `"FoodCal" <${process.env.EMAIL_USER}>`,
     to: email,
     subject: `${freqLabel} FoodCal Report (${start}${start !== end ? " – " + end : ""})`,
@@ -423,7 +441,8 @@ export async function sendOnDemandReportWithData({ email, displayName, frequency
   const freqLabel = (frequency || "weekly").charAt(0).toUpperCase() + (frequency || "weekly").slice(1);
   const html = buildEmailHtml(frequency || "weekly", displayName, weightLogs || [], foodLogs || [], workoutLogs || [], { start, end }, maintenanceCalories || 0);
 
-  await getTransporter().sendMail({
+  const mailer = await getTransporter();
+  await mailer.sendMail({
     from: `"FoodCal" <${process.env.EMAIL_USER}>`,
     to: email,
     subject: `${freqLabel} FoodCal Report (${start}${start !== end ? " – " + end : ""})`,
@@ -580,7 +599,8 @@ async function checkAndSendWeightReminders() {
     try {
       const displayName = data.displayName || data.name || "";
       const html = buildWeightReminderHtml(displayName, daysSince);
-      await getTransporter().sendMail({
+      const mailer = await getTransporter();
+      await mailer.sendMail({
         from: `"FoodCal" <${process.env.EMAIL_USER}>`,
         to: email,
         subject: `⚖️ Time to log your weight${daysSince ? ` (${daysSince} days since last entry)` : ""}`,
