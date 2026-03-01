@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../context/AuthContext";
 import { doc, getDoc, setDoc, collection, query, where, orderBy, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
-import API_URL from "../config";
+import { apiFetch } from "../config";
 
 const FREQ_OPTIONS = [
   { value: "daily", label: "Daily" },
@@ -144,7 +144,7 @@ const EmailSettings = () => {
       const weightLogs = weightSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
       const workoutLogs = workoutSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
 
-      const res = await fetch(`${API_URL}/email-report/send-with-data`, {
+      const res = await apiFetch("/email-report/send-with-data", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

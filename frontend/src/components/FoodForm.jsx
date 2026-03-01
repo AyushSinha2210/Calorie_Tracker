@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
-import API_URL from "../config";
+import { apiFetch } from "../config";
 
 const btnCls = "px-3 py-1.5 rounded-md font-semibold text-xs transition-all cursor-pointer text-white";
 const btnPrimary = `${btnCls} bg-surface-900 dark:bg-surface-100 dark:text-surface-900 hover:bg-surface-800 dark:hover:bg-surface-200`;
@@ -82,7 +82,7 @@ const FoodForm = () => {
     try {
       const formData = new FormData();
       formData.append("image", imageFile);
-      const res = await fetch(`${API_URL}/analyze-food-image`, { method: "POST", body: formData });
+      const res = await apiFetch("/analyze-food-image", { method: "POST", body: formData });
       if (!res.ok) {
         const errData = await res.json().catch(() => null);
         throw new Error(errData?.error || errData?.details || "Failed to analyze image");
@@ -90,7 +90,7 @@ const FoodForm = () => {
       const data = await res.json();
       setConfirmationData({ type: "image", items: data.items, totals: { calories: data.total_calories, protein: data.total_protein }, needsNutritionCalculation: data.needsNutritionCalculation || false });
     } catch (err) {
-      alert(err.message || "Failed to analyze image. Make sure the server is running on port 5000.");
+      alert(err.message || "Failed to analyze image.");
     }
     finally { setImageLoading(false); }
   };
@@ -99,7 +99,7 @@ const FoodForm = () => {
     if (!confirmationData?.items) return alert("No items to calculate nutrition for");
     setSaveLoading(true);
     try {
-      const res = await fetch(`${API_URL}/calculate-nutrition`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ items: confirmationData.items }) });
+      const res = await apiFetch("/calculate-nutrition", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ items: confirmationData.items }) });
       const data = await res.json();
       if (!res.ok) throw new Error(data.details || data.error || "Failed to calculate nutrition");
       setConfirmationData({ ...confirmationData, items: data.items, totals: { calories: data.total_calories, protein: data.total_protein }, needsNutritionCalculation: false });
@@ -128,7 +128,7 @@ const FoodForm = () => {
     if (!aiText) return alert("Please enter some food text to analyze");
     setAiLoading(true);
     try {
-      const res = await fetch(`${API_URL}/analyze-food`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: aiText }) });
+      const res = await apiFetch("/analyze-food", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: aiText }) });
       const data = await res.json();
       if (data.note) {
         if (!data.items?.length) { alert(data.note); setAiLoading(false); return; }
@@ -137,12 +137,7 @@ const FoodForm = () => {
       setConfirmationData({ type: "text", items: data.items || [], totals: { calories: data.total_calories || 0, protein: data.total_protein || 0 } });
       if (data.note) alert(data.note);
     } catch (err) {
-      const msg = err.message || "";
-      if (/fetch|network|ERR_CONNECTION/i.test(msg)) {
-        alert("Cannot connect to server. Make sure the server is running on port 5000.");
-      } else {
-        alert(msg || "Failed to analyze food. Please try again.");
-      }
+      alert(err.message || "Failed to analyze food. Please try again.");
     }
     finally { setAiLoading(false); }
   };
@@ -175,7 +170,7 @@ const FoodForm = () => {
   const lookupFoodNutrition = async (index, foodName, quantity) => {
     try {
       setLookupLoading((p) => ({ ...p, [index]: true }));
-      const res = await fetch(`${API_URL}/lookup-food`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: foodName, quantity }) });
+      const res = await apiFetch("/lookup-food", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: foodName, quantity }) });
       if (!res.ok) return alert(`Could not find nutrition data for "${foodName}"`);
       const data = await res.json();
       const items = [...confirmationData.items];

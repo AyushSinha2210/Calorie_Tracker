@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
-import API_URL from "../config";
+import { apiFetch } from "../config";
 
 const PromptGenerator = () => {
   const { userProfile } = useAuth();
@@ -21,7 +21,7 @@ const PromptGenerator = () => {
   const [constraints, setConstraints] = useState("");
 
   useEffect(() => {
-    fetch(`${API_URL}/ai-coach/templates`)
+    apiFetch("/ai-coach/templates")
       .then(r => r.json())
       .then(setTemplates)
       .catch(() => {
@@ -55,7 +55,7 @@ const PromptGenerator = () => {
         constraints: constraints || undefined,
       };
 
-      const res = await fetch(`${API_URL}/ai-coach/prompt`, {
+      const res = await apiFetch("/ai-coach/prompt", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ templateKey, profile }),

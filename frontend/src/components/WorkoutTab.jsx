@@ -3,7 +3,7 @@ import { addDoc, collection, query, where, orderBy, onSnapshot, deleteDoc, doc, 
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import { motion } from "framer-motion";
-import API_URL from "../config";
+import { apiFetch } from "../config";
 
 // ── Styles (Tailwind) ──
 const cardCls = "card p-5 md:p-6 mb-6";
@@ -98,7 +98,7 @@ const WorkoutTab = ({ allFoodLogs = [], maintenanceCalories = 0 }) => {
     debounceRef.current = setTimeout(async () => {
       setSearching(true);
       try {
-        const res = await fetch(`${API_URL}/workout/search?term=${encodeURIComponent(term)}`);
+        const res = await apiFetch(`/workout/search?term=${encodeURIComponent(term)}`);
         if (res.ok) setResults(await res.json());
       } catch { } finally { setSearching(false); }
     }, 400);
@@ -117,7 +117,7 @@ const WorkoutTab = ({ allFoodLogs = [], maintenanceCalories = 0 }) => {
     // Fetch exercise details (equipment, muscles, inputType)
     setLoadingInfo(true);
     try {
-      const res = await fetch(`${API_URL}/workout/exercise-info/${ex.id}`);
+      const res = await apiFetch(`/workout/exercise-info/${ex.id}`);
       if (res.ok) {
         const info = await res.json();
         setExerciseInfo(info);
@@ -174,7 +174,7 @@ const WorkoutTab = ({ allFoodLogs = [], maintenanceCalories = 0 }) => {
         } else {
           body.durationMin = Number(duration);
         }
-        const res = await fetch(`${API_URL}/workout/calculate`, {
+        const res = await apiFetch("/workout/calculate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),

@@ -3,7 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import { doc, setDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { motion, AnimatePresence } from "framer-motion";
-import API_URL from "../config";
+import { apiFetch } from "../config";
 
 const TONES = [
   { key: "strict", label: "🔥 Strict Coach", description: "Tough love, no sugarcoating" },
@@ -106,7 +106,7 @@ const AICoach = ({ allFoodLogs, allWorkoutLogs, maintenanceCalories }) => {
   const fetchComment = async (activityType, entry) => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/ai-coach/comment`, {
+      const res = await apiFetch("/ai-coach/comment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -151,7 +151,7 @@ const AICoach = ({ allFoodLogs, allWorkoutLogs, maintenanceCalories }) => {
   const requestSummaryComment = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/ai-coach/comment`, {
+      const res = await apiFetch("/ai-coach/comment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

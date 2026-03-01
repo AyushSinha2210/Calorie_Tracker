@@ -12,7 +12,12 @@ import multer from "multer";
 import { createGzip } from "node:zlib";
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "x-admin-secret"],
+  credentials: true,
+}));
 
 // Lightweight compression middleware (no extra dependency)
 app.use((req, res, next) => {
