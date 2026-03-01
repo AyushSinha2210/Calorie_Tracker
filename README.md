@@ -1,67 +1,100 @@
-# AI Powered Indian Food and Fitness Tracker
+# AI Powered Food & Fitness Tracker
 
-A full-stack web application for tracking fitness goals with AI-powered Indian food recognition and nutrition analysis using Google Gemini AI. Features real-time calorie and protein calculation with **image recognition, camera capture, and text input**.
+A full-stack fitness tracking app with AI-powered food recognition, nutrition analysis, workout tracking, AI coaching, and smart prompt generation. Built with React, Node.js, Firebase, and multiple AI APIs.
 
 ## Features
 
-- **AI Image Analysis** - Upload food photos or use camera for instant nutrition analysis
-- **User Authentication** - Secure Firebase authentication (Email + Google Sign-In)
-- **AI Food Analysis** - Natural language food input with Gemini AI
-- **Smart Confirmation** - Review and edit AI results before saving
-- **Indian Food Focus** - Specialized nutrition data for Indian cuisine
-- **Nutrition Tracking** - Automatic calorie and protein calculation via FatSecret + USDA APIs
-- **Smart Fallback** - Cascading AI model system for high availability
-- **Workout Tracking** - MET-based calorie burn calculation for 10+ exercises
-- **Responsive Design** - Works on desktop and mobile devices
-- **Protected Routes** - Secure dashboard access
+### Food Tracking (3 Methods)
+- **Image Analysis** — Upload or capture food photos; Gemini Vision identifies items, FatSecret/Groq calculates nutrition
+- **AI Text Entry** — Describe meals naturally (*"2 rotis and 1 bowl dal"*) and get instant nutrition breakdown
+- **Manual Entry** — Direct input with full control over calories and protein
 
-## Three Ways to Track Food
+### AI Coach
+- **Auto-comments** on every meal and workout you log
+- **4 tone presets** — Strict Coach, Friendly Trainer, Sarcastic Buddy, Motivational Speaker
+- **Day summary** on demand — get feedback on your overall day
+- Uses a **separate Groq API key** so coaching doesn't eat into nutrition API quota
 
-1. **Image Upload/Camera** - Take a photo or upload an image
-   - Frontend preprocessing (resize + compress to JPEG)
-   - Gemini Vision identifies food and estimates grams
-   - FatSecret/USDA APIs calculate accurate calories and protein
+### Prompt Generator
+- **6 ready-to-paste prompts** pre-filled with your profile data:
+  - Home Workout Plan, Gym Workout Plan, Daily Exercise Routine
+  - Mess/Hostel Diet Plan, Personalized Diet Plan, Weight Loss Plan
+- Customize goal, fitness level, diet preference, target weight, timeframe
+- Copy and paste into ChatGPT, Gemini, Claude, or any AI assistant
 
-2. **AI Text Entry** - Type what you ate
-   - Example: "2 rotis and 1 bowl dal"
-   - AI analyzes and returns nutrition data
+### Workout Tracking
+- Search 800+ exercises from wger API
+- MET-based calorie burn calculation (cardio, strength, isometric, bodyweight)
+- Daily workout log with history
 
-3. **Manual Entry** - Direct input for full control
-   - Enter food name, quantity, calories, and protein manually
+### Other
+- **Weight History** — Track weight over time with visual chart
+- **Email Reports** — Automated daily/weekly/monthly nutrition reports via email
+- **Nutrition Charts** — 7-day bar charts for calories and protein trends
+- **Monthly Nutrition Table** — Full month view with daily totals and averages
+- **User Authentication** — Firebase Auth (Email/Password + Google Sign-In)
+- **Profile Management** — Age, weight, height, gender, calorie target
+- **Responsive Design** — Works on desktop, tablet, and mobile
+
+## Tech Stack
+
+| Layer | Technologies |
+|-------|-------------|
+| **Frontend** | React 19, React Router v7, Tailwind CSS, Framer Motion, Recharts |
+| **Backend** | Node.js (ESM), Express 5, Multer |
+| **Database** | Firebase Firestore |
+| **Auth** | Firebase Authentication |
+| **AI/Nutrition** | Google Gemini (vision + text), Groq LLMs (Llama models), FatSecret API |
+| **Email** | Nodemailer (Gmail) |
 
 ## Project Structure
 
 ```
-Fitness Goal Tracker/
-├── server/                    # Node.js + Express API server
-│   ├── server.js              # Main server entry point
-│   ├── config/
-│   │   └── firebase.js        # Firebase Admin config
-│   ├── routes/
-│   │   ├── food.js            # Food API routes
-│   │   └── workout.js         # Workout API routes
-│   ├── services/
-│   │   ├── geminiService.js   # Gemini AI integration with model cascade
-│   │   ├── fatsecretService.js # FatSecret + USDA nutrition APIs
-│   │   └── metService.js      # MET-based workout calorie calculator
-│   ├── utils/
-│   │   └── nutritionCache.js  # In-memory nutrition cache (24h TTL)
-│   ├── .env                   # Environment variables (not committed)
-│   └── package.json
-├── frontend/                  # React application
+├── frontend/                    # React application
 │   ├── src/
-│   │   ├── Pages/
-│   │   │   ├── Dashboard.jsx  # Main dashboard with food log summary
-│   │   │   ├── Login.jsx      # Login page (Email + Google)
-│   │   │   └── Register.jsx   # Registration page
-│   │   ├── components/
-│   │   │   ├── FoodForm.jsx   # Image/Text/Manual food entry
-│   │   │   └── ProtectedRoute.jsx
+│   │   ├── config.js            # Shared API base URL
+│   │   ├── firebase.js          # Firebase client config
 │   │   ├── context/
-│   │   │   └── AuthContext.jsx # Firebase auth state management
-│   │   └── firebase.js        # Firebase client config
-│   ├── public/
+│   │   │   └── AuthContext.jsx   # Auth state + user profile
+│   │   ├── Pages/
+│   │   │   ├── Dashboard.jsx    # Main app (5 tabs)
+│   │   │   ├── Login.jsx        # Email + Google login
+│   │   │   ├── Register.jsx     # Registration
+│   │   │   ├── Profile.jsx      # View/edit profile
+│   │   │   ├── ProfileSetup.jsx # First-time setup
+│   │   │   ├── ForgotPassword.jsx
+│   │   │   └── VerifyEmail.jsx
+│   │   └── components/
+│   │       ├── FoodForm.jsx          # Image/Text/Manual food entry
+│   │       ├── FoodLogEditor.jsx     # Edit/delete food logs by date
+│   │       ├── NutritionChart.jsx    # 7-day calorie/protein charts
+│   │       ├── MonthlyNutritionTable.jsx
+│   │       ├── WorkoutTab.jsx        # Exercise search + logging
+│   │       ├── WeightPrompt.jsx      # Daily weight check-in
+│   │       ├── WeightHistory.jsx     # Weight trend chart
+│   │       ├── AICoach.jsx           # AI comment feed + tone selector
+│   │       ├── PromptGenerator.jsx   # Ready-to-paste prompt builder
+│   │       ├── EmailSettings.jsx     # Email report configuration
+│   │       ├── FeedbackModal.jsx     # User feedback form
+│   │       └── ProtectedRoute.jsx    # Auth guard
 │   └── package.json
+├── server/                      # Express API server
+│   ├── server.js                # Routes + middleware
+│   ├── services/
+│   │   ├── geminiService.js     # Gemini AI (5-model cascade)
+│   │   ├── groqService.js       # Groq LLMs (3-model fallback)
+│   │   ├── aiCoachService.js    # AI Coach + prompt templates
+│   │   ├── fatsecretService.js  # FatSecret nutrition API
+│   │   ├── workoutService.js    # Exercise search + calorie calc
+│   │   ├── emailReportService.js # Scheduled email reports
+│   │   └── userCleanupService.js # Inactive user cleanup
+│   ├── utils/
+│   │   └── nutritionCache.js    # In-memory cache (24h TTL)
+│   ├── .env.example
+│   └── package.json
+├── .gitignore
+├── CONTRIBUTING.md
+├── LICENSE
 └── README.md
 ```
 
@@ -69,148 +102,100 @@ Fitness Goal Tracker/
 
 ### Prerequisites
 
-- Node.js (v18 or higher)
-- npm
-- Google Gemini API key ([Get one here](https://aistudio.google.com/app/apikey))
-- Firebase project ([Create one here](https://console.firebase.google.com/))
+- Node.js v18+
+- Firebase project — [Create one](https://console.firebase.google.com/)
+- Gemini API key — [Get one](https://aistudio.google.com/app/apikey)
+- Groq API key — [Get one](https://console.groq.com/keys) (free tier)
+- FatSecret API credentials — [Register](https://platform.fatsecret.com/api/)
 
 ### Installation
 
-1. **Clone the repository**
-
-   ```bash
-   git clone https://github.com/AyushSinha2210/Calorie_Tracker.git
-   cd Calorie_Tracker
-   ```
-
-2. **Install Backend dependencies**
-
-   ```bash
-   cd server
-   npm install
-   ```
-
-3. **Install Frontend dependencies**
-
-   ```bash
-   cd ../frontend
-   npm install
-   ```
-
-4. **Setup environment variables**
-
-   Copy the example env file and fill in your keys:
-
-   ```bash
-   cp server/.env.example server/.env
-   ```
-
-   Required variables:
-
-   ```env
-   GEMINI_API_KEY=your_gemini_api_key
-   FATSECRET_CLIENT_ID=your_fatsecret_client_id
-   FATSECRET_CLIENT_SECRET=your_fatsecret_client_secret
-   ```
-
-5. **Configure Firebase**
-
-   Update `frontend/src/firebase.js` and `server/config/firebase.js` with your Firebase project credentials.
-
-## Running the Application
-
-### Start Backend Server
-
 ```bash
+git clone https://github.com/AyushSinha2210/Calorie_Tracker.git
+cd Calorie_Tracker
+
+# Backend
 cd server
-npm start
+npm install
+cp .env.example .env   # Fill in your API keys
+
+# Frontend
+cd ../frontend
+npm install
 ```
 
-Server runs on `http://localhost:5000`
+### Environment Variables
 
-### Start Frontend (in a new terminal)
+Edit `server/.env` with your keys (see `.env.example` for all options):
+
+```env
+GEMINI_API_KEY=your_key
+GROQ_API_KEY=your_key
+GROQ_COACH_API_KEY=your_key        # Optional (falls back to GROQ_API_KEY)
+FATSECRET_CLIENT_ID=your_id
+FATSECRET_CLIENT_SECRET=your_secret
+PORT=5000
+```
+
+For Firebase Admin features (email reports, user cleanup), also set:
+```env
+FIREBASE_SERVICE_ACCOUNT={"type":"service_account",...}
+EMAIL_USER=your_email@gmail.com
+EMAIL_APP_PASSWORD=your_app_password
+```
+
+### Running
 
 ```bash
-cd frontend
-npm start
-```
+# Terminal 1 — Backend
+cd server && npm start       # http://localhost:5000
 
-App runs on `http://localhost:3000`
+# Terminal 2 — Frontend
+cd frontend && npm start     # http://localhost:3000
+```
 
 ## API Endpoints
 
 ### Food Analysis
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/analyze-food` | AI text-based food analysis (Groq) |
+| POST | `/analyze-food-image` | Image-based food detection (Gemini) |
+| POST | `/calculate-nutrition` | Batch nutrition lookup (FatSecret + Groq fallback) |
+| POST | `/lookup-food` | Single food nutrition lookup |
 
-| Method | Endpoint               | Description                              |
-| ------ | ---------------------- | ---------------------------------------- |
-| POST   | `/analyze-food`        | Analyze food text with Gemini AI         |
-| POST   | `/analyze-food-image`  | Analyze food image (multipart/form-data) |
-| POST   | `/calculate-nutrition` | Calculate nutrition via FatSecret/USDA   |
-| POST   | `/lookup-food`         | Lookup single food nutrition             |
+### AI Coach
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/ai-coach/comment` | Get AI coach comment on food/workout entry |
+| GET | `/ai-coach/templates` | List available prompt templates |
+| POST | `/ai-coach/prompt` | Build a ready-to-paste prompt from template |
 
 ### Workout
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/workout/search?term=...` | Search exercises |
+| GET | `/workout/categories` | List exercise categories |
+| GET | `/workout/exercise-info/:id` | Exercise details |
+| POST | `/workout/calculate` | Calculate calories burned |
 
-| Method | Endpoint                 | Description                              |
-| ------ | ------------------------ | ---------------------------------------- |
-| POST   | `/api/workout/log`       | Log a workout with calorie calculation   |
-| GET    | `/api/workout/exercises` | List available exercises with MET values |
+### Other
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/model-status` | AI model RPD usage stats |
+| POST | `/email-report/send-with-data` | Send nutrition report email |
+| POST | `/admin/cleanup-inactive-users` | Manual inactive user cleanup |
 
-### Example Request
+## AI Model Architecture
 
-```json
-POST /analyze-food
-{ "text": "2 roti with dal" }
-```
+**Gemini (Food Vision)** — 5-model cascade with automatic failover:
+`gemini-2.0-flash-lite` → `gemini-2.0-flash` → `gemini-2.5-flash-lite` → `gemini-2.5-flash` → `gemini-2.5-pro`
 
-### Example Response
+**Groq (Nutrition Analysis)** — 3-model fallback with RPD tracking:
+`llama-3.1-8b-instant` → `llama-3.3-70b-versatile` → `llama-4-scout-17b`
 
-```json
-{
-  "items": [
-    { "name": "Roti", "quantity": "2 (80g)", "calories": 248, "protein": 8 },
-    {
-      "name": "Dal",
-      "quantity": "1 bowl (150g)",
-      "calories": 165,
-      "protein": 10.5
-    }
-  ],
-  "total_calories": 413,
-  "total_protein": 18.5
-}
-```
-
-## Tech Stack
-
-**Frontend:** React 19, React Router v7, Firebase Auth & Firestore
-
-**Backend:** Node.js (ESM), Express 5, Multer, dotenv
-
-**AI & Nutrition:** Google Gemini AI (multi-model cascade), FatSecret API, USDA FoodData Central
-
-**AI Model Cascade:**
-
-1. `gemini-2.5-flash` (Primary)
-2. `gemini-2.0-flash` (Fallback)
-3. `gemini-2.0-flash-lite` (Fallback)
-4. `gemini-2.5-pro` (Fallback)
-5. `gemini-3-pro` (Final Fallback)
-
-## Supported Indian Foods
-
-The AI recognizes common Indian food items with standardized portions:
-
-Roti (40g), Dal (150g/bowl), Rice (200g/cup), Biryani, Curry, Paratha, Dosa, Idli, and more.
-
-Simply describe your meal naturally: _"2 roti with dal"_ or _"1 plate chicken biryani"_
-
-## Security
-
-- API keys stored in `.env` (not committed to git)
-- Firebase authentication for secure user access
-- Protected routes prevent unauthorized access
-- CORS enabled for frontend-backend communication
+**Groq Coach (AI Comments)** — Same model pool, separate API key to avoid quota conflicts.
 
 ## License
 
-This project is licensed under the ISC License.
+ISC License — see [LICENSE](LICENSE) for details.

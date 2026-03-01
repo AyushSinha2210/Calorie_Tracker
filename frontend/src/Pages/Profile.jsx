@@ -22,6 +22,7 @@ function Profile() {
   const [height, setHeight] = useState("");
   const [heightUnit, setHeightUnit] = useState("cm");
   const [calorieTarget, setCalorieTarget] = useState("");
+  const [gender, setGender] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
@@ -36,6 +37,7 @@ function Profile() {
     setHeight(userProfile.originalHeight?.toString() || userProfile.height?.toString() || "");
     setHeightUnit(userProfile.heightUnit || "cm");
     setCalorieTarget(userProfile.dailyCalorieTarget?.toString() || "");
+    setGender(userProfile.gender || "");
   }, [userProfile]);
 
   const handleSave = async (e) => {
@@ -68,6 +70,7 @@ function Profile() {
         heightUnit,
         originalHeight: hNum,
         dailyCalorieTarget: calNum,
+        gender,
         profileComplete: true,
         lastActive: serverTimestamp(),
       }, { merge: true });
@@ -95,7 +98,7 @@ function Profile() {
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
           <button onClick={() => navigate("/dashboard")} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 22, color: "#667eea", padding: 0, lineHeight: 1 }} title="Back to Dashboard">
-            ← 
+            ←
           </button>
           <h2 style={{ margin: 0, fontSize: 20, flex: 1, textAlign: "center" }}>My Profile</h2>
           <div style={{ width: 28 }} />
@@ -126,6 +129,10 @@ function Profile() {
                 <div style={{ fontSize: 15, fontWeight: 500, color: "#333" }}>{userProfile?.age || "—"}</div>
               </div>
               <div>
+                <div style={labelStyle}>Gender</div>
+                <div style={{ fontSize: 15, fontWeight: 500, color: "#333", textTransform: "capitalize" }}>{userProfile?.gender || "—"}</div>
+              </div>
+              <div>
                 <div style={labelStyle}>Daily Calorie Target</div>
                 <div style={{ fontSize: 15, fontWeight: 500, color: "#333" }}>{userProfile?.dailyCalorieTarget ? `${userProfile.dailyCalorieTarget} kcal` : "—"}</div>
               </div>
@@ -137,6 +144,25 @@ function Profile() {
                 <div style={labelStyle}>Height</div>
                 <div style={{ fontSize: 15, fontWeight: 500, color: "#333" }}>{displayHeight}</div>
               </div>
+            </div>
+
+            {/* AI Coach settings */}
+            <div style={{ marginTop: 20, paddingTop: 14, borderTop: "1px solid #eee" }}>
+              <div style={labelStyle}>AI Coach</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                <span style={{ fontSize: 14, color: "#333" }}>{userProfile?.coachEnabled ? "✅ Enabled" : "❌ Disabled"}</span>
+              </div>
+              {userProfile?.coachEnabled && (
+                <div>
+                  <div style={labelStyle}>Coach Tone</div>
+                  <div style={{ fontSize: 14, color: "#333", textTransform: "capitalize" }}>
+                    {userProfile?.coachTone === "strict" ? "🔥 Strict Coach"
+                      : userProfile?.coachTone === "sarcastic" ? "😏 Sarcastic Buddy"
+                      : userProfile?.coachTone === "motivational" ? "💪 Motivational"
+                      : "😊 Friendly Trainer"}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Account info */}
@@ -167,6 +193,17 @@ function Profile() {
                 <label htmlFor="p-age" style={labelStyle}>Age <span style={{ color: "red" }}>*</span></label>
                 <input type="number" id="p-age" min="10" max="120" value={age} onChange={(e) => setAge(e.target.value)} required style={inputStyle} />
               </div>
+              <div>
+                <label htmlFor="p-gender" style={labelStyle}>Gender <span style={{ color: "red" }}>*</span></label>
+                <select id="p-gender" value={gender} onChange={(e) => setGender(e.target.value)} required
+                  style={{ ...inputStyle, background: "#fff" }}>
+                  <option value="">Select</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                </select>
+              </div>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 10 }}>
               <div>
                 <label htmlFor="p-cal" style={labelStyle}>Daily Calorie Target <span style={{ color: "red" }}>*</span></label>
                 <input type="number" id="p-cal" min="500" max="10000" value={calorieTarget} onChange={(e) => setCalorieTarget(e.target.value)} required style={inputStyle} />

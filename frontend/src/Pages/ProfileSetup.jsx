@@ -21,6 +21,7 @@ function ProfileSetup() {
   const [height, setHeight] = useState("");
   const [heightUnit, setHeightUnit] = useState("cm");
   const [calorieTarget, setCalorieTarget] = useState("");
+  const [gender, setGender] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -29,7 +30,7 @@ function ProfileSetup() {
     setError("");
 
     // Validation
-    if (!name.trim() || !age || !weight || !height || !calorieTarget) {
+    if (!name.trim() || !age || !weight || !height || !calorieTarget || !gender) {
       return setError("All fields are required.");
     }
     const ageNum = Number(age);
@@ -57,6 +58,7 @@ function ProfileSetup() {
         heightUnit,
         originalHeight: hNum,
         dailyCalorieTarget: calNum,
+        gender,
         profileComplete: true,
         lastActive: serverTimestamp(),
       }, { merge: true });
@@ -94,6 +96,18 @@ function ProfileSetup() {
               <input type="number" id="age" placeholder="e.g. 25" min="10" max="120" value={age} onChange={(e) => setAge(e.target.value)} required
                 style={{ width: "100%", padding: "10px 12px", border: "1px solid #ddd", borderRadius: 5, fontSize: 14, boxSizing: "border-box" }} />
             </div>
+            <div>
+              <label htmlFor="gender" style={{ display: "block", fontSize: 13, fontWeight: 600, marginBottom: 4, color: "#333" }}>Gender <span style={{ color: "red" }}>*</span></label>
+              <select id="gender" value={gender} onChange={(e) => setGender(e.target.value)} required
+                style={{ width: "100%", padding: "10px 12px", border: "1px solid #ddd", borderRadius: 5, fontSize: 14, boxSizing: "border-box", background: "#fff" }}>
+                <option value="">Select</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+              </select>
+            </div>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 10 }}>
             <div>
               <label htmlFor="calorieTarget" style={{ display: "block", fontSize: 13, fontWeight: 600, marginBottom: 4, color: "#333" }}>Daily Calorie Target <span style={{ color: "red" }}>*</span></label>
               <input type="number" id="calorieTarget" placeholder="e.g. 2000" min="500" max="10000" value={calorieTarget} onChange={(e) => setCalorieTarget(e.target.value)} required

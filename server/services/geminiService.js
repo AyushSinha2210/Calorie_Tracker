@@ -5,12 +5,11 @@ import { getCached, setCache } from "../utils/nutritionCache.js";
 // We set a conservative threshold at 90% of the limit to switch proactively.
 // Models ordered fastest-first: 2.0 lite/flash are ~1-3s, 3.0 lite ~2-4s, 2.5/3.0 "thinking" models are slow (10-30s)
 const MODEL_CONFIG = [
-  { name: "gemini-2.0-flash-lite",                   rpd: 1500 },
-  { name: "gemini-2.0-flash",                        rpd: 1500 },
-  { name: "gemini-2.0-flash-001",                    rpd: 1500 },
-  { name: "gemini-3.0-flash-lite",                   rpd: 1500 },
-  { name: "gemini-3.0-flash",                        rpd: 500  },
-  { name: "gemini-2.5-flash",                        rpd: 500  },
+  { name: "gemini-2.0-flash-lite", rpd: 1500 },
+  { name: "gemini-2.0-flash", rpd: 1500 },
+  { name: "gemini-2.5-flash-lite", rpd: 1500 },
+  { name: "gemini-2.5-flash", rpd: 500 },
+  { name: "gemini-2.5-pro", rpd: 50 },
 ];
 
 const MODELS = MODEL_CONFIG.map(m => m.name);

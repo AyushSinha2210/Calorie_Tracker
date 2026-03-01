@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../context/AuthContext";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, collection, query, where, orderBy, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
 
 const FREQ_OPTIONS = [
@@ -19,10 +19,29 @@ const DAYS_OF_WEEK = [
   { value: 6, label: "Sat" },
 ];
 
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+import API_URL from "../config";
+
+// Helper: get date range based on frequency
+function getDateRange(freq) {
+  const now = new Date();
+  const end = now.toISOString().split("T")[0];
+  let start;
+  if (freq === "daily") {
+    start = end;
+  } else if (freq === "weekly") {
+    const d = new Date(now);
+    d.setDate(d.getDate() - 6);
+    start = d.toISOString().split("T")[0];
+  } else {
+    const d = new Date(now);
+    d.setDate(d.getDate() - 29);
+    start = d.toISOString().split("T")[0];
+  }
+  return { start, end };
+}
 
 const EmailSettings = () => {
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const [enabled, setEnabled] = useState(false);
   const [frequency, setFrequency] = useState("weekly");
   const [time, setTime] = useState("20:00");       // HH:MM
@@ -98,19 +117,50 @@ const EmailSettings = () => {
     }
   };
 
-  // Send report now
+  // Send report now — fetches data from Firestore client SDK and sends to server
   const handleSendNow = async () => {
     if (!user) return;
     setSending(true);
     try {
-      const res = await fetch(`${API_URL}/email-report/send`, {
+      const { start, end } = getDateRange(frequency);
+      const uid = user.uid;
+
+      // Fetch food logs, weight logs, and workout logs from Firestore client SDK
+      const [foodSnap, weightSnap, workoutSnap] = await Promise.all([
+        getDocs(query(
+          collection(db, "users", uid, "foodLogs"),
+          where("date", ">=", start), where("date", "<=", end), orderBy("date", "asc")
+        )),
+        getDocs(query(
+          collection(db, "users", uid, "weightLogs"),
+          where("date", ">=", start), where("date", "<=", end), orderBy("date", "asc")
+        )),
+        getDocs(query(
+          collection(db, "users", uid, "workoutLogs"),
+          where("date", ">=", start), where("date", "<=", end), orderBy("date", "asc")
+        )),
+      ]);
+
+      const foodLogs = foodSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      const weightLogs = weightSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      const workoutLogs = workoutSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+
+      const res = await fetch(`${API_URL}/email-report/send-with-data`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          uid: user.uid,
           email: user.email,
           displayName: user.displayName || user.email,
           frequency,
+          foodLogs,
+          weightLogs,
+          workoutLogs,
+          maintenanceCalories: (() => {
+            if (!userProfile?.weight || !userProfile?.height || !userProfile?.age) return 0;
+            const w = Number(userProfile.weight), h = Number(userProfile.height), a = Number(userProfile.age);
+            const offset = userProfile.gender === "female" ? -161 : 5;
+            return Math.round((10 * w + 6.25 * h - 5 * a + offset) * 1.55);
+          })(),
         }),
       });
       const data = await res.json();

@@ -1,0 +1,73 @@
+/* ── Global Responsive Overrides ── */
+
+/* Dashboard & Workout summary card grids */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+/* Tab bar */
+.tab-bar {
+  display: flex;
+  gap: 0;
+  margin-bottom: 24px;
+  border-bottom: 2px solid #eee;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.tab-bar::-webkit-scrollbar { display: none; }
+
+/* Header row */
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* Monthly nutrition table: horizontal scroll on small screens */
+.nutrition-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Workout history tables */
+.workout-history table {
+  min-width: 500px;
+}
+
+/* ── Responsive breakpoints ── */
+
+@media (max-width: 768px) {
+  .summary-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .tab-bar button {
+    padding: 8px 14px !important;
+    font-size: 13px !important;
+    white-space: nowrap;
+  }
+  .dashboard-header h1 {
+    font-size: 20px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .summary-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .dashboard-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .dashboard-header h1 {
+    font-size: 18px !important;
+    text-align: center;
+  }
+  .tab-bar button {
+    padding: 8px 10px !important;
+    font-size: 12px !important;
+  }
+}

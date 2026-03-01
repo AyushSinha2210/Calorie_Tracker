@@ -2,15 +2,14 @@ import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { addDoc, collection, query, where, orderBy, onSnapshot, deleteDoc, doc, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
+import { motion } from "framer-motion";
+import API_URL from "../config";
 
-const API_URL = "http://localhost:5000";
-
-// ── Styles ──
-const card = { background: "#fff", borderRadius: 12, padding: "20px 24px", boxShadow: "0 2px 12px rgba(0,0,0,0.07)", marginBottom: 20 };
-const heading = { fontSize: 18, fontWeight: 700, margin: "0 0 16px", color: "#333" };
-const inp = (extra = {}) => ({ width: "100%", padding: "10px", borderRadius: 6, border: "1px solid #ddd", fontSize: 14, boxSizing: "border-box", ...extra });
-const btn = (bg, extra = {}) => ({ padding: "10px 20px", background: bg, color: "#fff", border: "none", borderRadius: 6, cursor: "pointer", fontWeight: 600, fontSize: 14, ...extra });
-const label = { display: "block", fontSize: 13, fontWeight: 600, color: "#555", marginBottom: 4 };
+// ── Styles (Tailwind) ──
+const cardCls = "bg-white rounded-2xl p-5 md:p-6 shadow-sm border border-gray-100 mb-6";
+const headingCls = "text-lg font-bold text-gray-800 mb-4 flex items-center gap-2";
+const inpCls = "w-full p-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all text-sm";
+const labelCls = "block text-sm font-semibold text-gray-600 mb-1.5";
 
 const CATEGORY_COLORS = {
   Abs: "#e74c3c", Arms: "#3498db", Back: "#27ae60", Calves: "#e67e22",
@@ -24,7 +23,7 @@ const INPUT_TYPE_LABELS = {
   isometric: "🧘 Isometric / Hold",
 };
 
-const WorkoutTab = () => {
+const WorkoutTab = ({ allFoodLogs = [], maintenanceCalories = 0 }) => {
   const { user } = useAuth();
   const [search, setSearch] = useState("");
   const [results, setResults] = useState([]);
@@ -101,7 +100,7 @@ const WorkoutTab = () => {
       try {
         const res = await fetch(`${API_URL}/workout/search?term=${encodeURIComponent(term)}`);
         if (res.ok) setResults(await res.json());
-      } catch {} finally { setSearching(false); }
+      } catch { } finally { setSearching(false); }
     }, 400);
   }, []);
 
@@ -140,8 +139,8 @@ const WorkoutTab = () => {
   const canCalculate = useMemo(() => {
     if (!selected || !exerciseInfo || !userWeight) return false;
     switch (inputType) {
-      case "cardio":    return !!duration;
-      case "weighted":  return !!sets && !!reps && !!liftedWeight;
+      case "cardio": return !!duration;
+      case "weighted": return !!sets && !!reps && !!liftedWeight;
       case "bodyweight": return !!sets && !!reps;
       case "isometric": return !!holdSeconds;
       default: return !!duration;
@@ -273,6 +272,8 @@ const WorkoutTab = () => {
   const todayLogs = workoutLogs.filter((l) => l.date === today);
   const todayCalBurned = todayLogs.reduce((s, l) => s + (l.caloriesBurned || 0), 0);
   const todayDuration = todayLogs.reduce((s, l) => s + (l.durationMin || l.effectiveDurationMin || 0), 0);
+  const todayFoodCal = allFoodLogs.filter((l) => l.date === today).reduce((s, l) => s + (l.calories || 0), 0);
+  const todayDeficit = maintenanceCalories - Math.round(todayFoodCal) + todayCalBurned;
 
   // Group by date for history
   const logsByDate = useMemo(() => {
@@ -300,20 +301,22 @@ const WorkoutTab = () => {
   };
 
   return (
-    <div>
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
       {/* ── Search & Log Workout ── */}
-      <div style={card}>
-        <h3 style={heading}>🏋️ Log Workout</h3>
+      <div className={cardCls}>
+        <h3 className={headingCls}>
+          <span className="text-2xl">🏋️</span> Log Workout
+        </h3>
 
-        <div style={{ position: "relative" }}>
-          <label htmlFor="workout-search" style={label}>Search Exercise</label>
+        <div className="relative">
+          <label htmlFor="workout-search" className={labelCls}>Search Exercise</label>
           <input
             type="text"
             id="workout-search"
             value={search}
             onChange={(e) => handleSearch(e.target.value)}
             placeholder="Type to search (e.g. push up, squat, running...)"
-            style={inp()}
+            className={inpCls}
           />
           {searching && (
             <div style={{ position: "absolute", right: 12, top: 30, color: "#999", fontSize: 12 }}>Searching...</div>
@@ -401,87 +404,87 @@ const WorkoutTab = () => {
 
         {/* ── Dynamic Input Fields ── */}
         {selected && exerciseInfo && !loadingInfo && (
-          <div style={{ marginTop: 14 }}>
+          <div className="mt-4">
             {/* ── Cardio inputs: Duration + Distance ── */}
             {inputType === "cardio" && (
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
                 <div>
-                  <label style={label}>Duration (min) *</label>
+                  <label className={labelCls}>Duration (min) *</label>
                   <input type="number" value={duration} onChange={(e) => setDuration(e.target.value)}
-                    placeholder="e.g. 30" min="1" max="600" style={inp()} />
+                    placeholder="e.g. 30" min="1" max="600" className={inpCls} />
                 </div>
                 <div>
-                  <label style={label}>Distance (km)</label>
+                  <label className={labelCls}>Distance (km)</label>
                   <input type="number" value={distance} onChange={(e) => setDistance(e.target.value)}
-                    placeholder="optional" min="0" max="200" step="0.1" style={inp()} />
+                    placeholder="optional" min="0" max="200" step="0.1" className={inpCls} />
                 </div>
                 <div>
-                  <label style={label}>Your Weight (kg) *</label>
+                  <label className={labelCls}>Your Weight (kg) *</label>
                   <input type="number" value={userWeight} onChange={(e) => setUserWeight(e.target.value)}
-                    placeholder="e.g. 70" min="20" max="700" step="0.1" style={inp()} />
+                    placeholder="e.g. 70" min="20" max="700" step="0.1" className={inpCls} />
                 </div>
               </div>
             )}
 
             {/* ── Weighted inputs: Sets + Reps + Weight Lifted ── */}
             {inputType === "weighted" && (
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 12 }}>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
                 <div>
-                  <label style={label}>Sets *</label>
+                  <label className={labelCls}>Sets *</label>
                   <input type="number" value={sets} onChange={(e) => setSets(e.target.value)}
-                    placeholder="e.g. 3" min="1" max="50" style={inp()} />
+                    placeholder="e.g. 3" min="1" max="50" className={inpCls} />
                 </div>
                 <div>
-                  <label style={label}>Reps / Set *</label>
+                  <label className={labelCls}>Reps / Set *</label>
                   <input type="number" value={reps} onChange={(e) => setReps(e.target.value)}
-                    placeholder="e.g. 12" min="1" max="200" style={inp()} />
+                    placeholder="e.g. 12" min="1" max="200" className={inpCls} />
                 </div>
                 <div>
-                  <label style={label}>Weight Lifted (kg) *</label>
+                  <label className={labelCls}>Weight Lifted (kg) *</label>
                   <input type="number" value={liftedWeight} onChange={(e) => setLiftedWeight(e.target.value)}
-                    placeholder="e.g. 40" min="0" max="1000" step="0.5" style={inp()} />
+                    placeholder="e.g. 40" min="0" max="1000" step="0.5" className={inpCls} />
                 </div>
                 <div>
-                  <label style={label}>Body Weight (kg) *</label>
+                  <label className={labelCls}>Body Weight (kg) *</label>
                   <input type="number" value={userWeight} onChange={(e) => setUserWeight(e.target.value)}
-                    placeholder="e.g. 70" min="20" max="700" step="0.1" style={inp()} />
+                    placeholder="e.g. 70" min="20" max="700" step="0.1" className={inpCls} />
                 </div>
               </div>
             )}
 
             {/* ── Bodyweight inputs: Sets + Reps ── */}
             {inputType === "bodyweight" && (
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
                 <div>
-                  <label style={label}>Sets *</label>
+                  <label className={labelCls}>Sets *</label>
                   <input type="number" value={sets} onChange={(e) => setSets(e.target.value)}
-                    placeholder="e.g. 3" min="1" max="50" style={inp()} />
+                    placeholder="e.g. 3" min="1" max="50" className={inpCls} />
                 </div>
                 <div>
-                  <label style={label}>Reps / Set *</label>
+                  <label className={labelCls}>Reps / Set *</label>
                   <input type="number" value={reps} onChange={(e) => setReps(e.target.value)}
-                    placeholder="e.g. 15" min="1" max="200" style={inp()} />
+                    placeholder="e.g. 15" min="1" max="200" className={inpCls} />
                 </div>
                 <div>
-                  <label style={label}>Your Weight (kg) *</label>
+                  <label className={labelCls}>Your Weight (kg) *</label>
                   <input type="number" value={userWeight} onChange={(e) => setUserWeight(e.target.value)}
-                    placeholder="e.g. 70" min="20" max="700" step="0.1" style={inp()} />
+                    placeholder="e.g. 70" min="20" max="700" step="0.1" className={inpCls} />
                 </div>
               </div>
             )}
 
             {/* ── Isometric inputs: Hold Duration ── */}
             {inputType === "isometric" && (
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                 <div>
-                  <label style={label}>Hold Duration (seconds) *</label>
+                  <label className={labelCls}>Hold Duration (seconds) *</label>
                   <input type="number" value={holdSeconds} onChange={(e) => setHoldSeconds(e.target.value)}
-                    placeholder="e.g. 60" min="1" max="3600" style={inp()} />
+                    placeholder="e.g. 60" min="1" max="3600" className={inpCls} />
                 </div>
                 <div>
-                  <label style={label}>Your Weight (kg) *</label>
+                  <label className={labelCls}>Your Weight (kg) *</label>
                   <input type="number" value={userWeight} onChange={(e) => setUserWeight(e.target.value)}
-                    placeholder="e.g. 70" min="20" max="700" step="0.1" style={inp()} />
+                    placeholder="e.g. 70" min="20" max="700" step="0.1" className={inpCls} />
                 </div>
               </div>
             )}
@@ -528,19 +531,18 @@ const WorkoutTab = () => {
         <button
           onClick={handleSave}
           disabled={!selected || !calcResult || saving}
-          style={btn(
-            !selected || !calcResult || saving ? "#ccc" : "linear-gradient(135deg, #667eea, #764ba2)",
-            { width: "100%", marginTop: 14, padding: 12, fontSize: 15 }
-          )}
+          className={`w-full mt-4 py-3 rounded-xl font-bold text-white transition-all shadow-md ${!selected || !calcResult || saving ? 'bg-gray-300 cursor-not-allowed shadow-none' : 'bg-gradient-to-r from-brand-500 to-accent-500 hover:shadow-lg hover:-translate-y-0.5'}`}
         >
           {saving ? "Saving..." : "💾 Save Workout"}
         </button>
       </div>
 
       {/* ── Today's Summary ── */}
-      <div style={card}>
-        <h3 style={heading}>📊 Today's Summary</h3>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+      <div className={cardCls}>
+        <h3 className={headingCls}>
+          <span className="text-2xl">📊</span> Today's Summary
+        </h3>
+        <div className="summary-grid">
           <div style={{ textAlign: "center", padding: 12, background: "#fef3f3", borderRadius: 8 }}>
             <div style={{ fontSize: 12, color: "#999" }}>Calories Burned</div>
             <div style={{ fontSize: 24, fontWeight: 800, color: "#e74c3c" }}>🔥 {todayCalBurned}</div>
@@ -553,58 +555,68 @@ const WorkoutTab = () => {
             <div style={{ fontSize: 12, color: "#999" }}>Duration</div>
             <div style={{ fontSize: 24, fontWeight: 800, color: "#27ae60" }}>{Math.round(todayDuration)}m</div>
           </div>
+          <div style={{ textAlign: "center", padding: 12, background: todayDeficit >= 0 ? "#e8f5e9" : "#fce4ec", borderRadius: 8, border: `2px solid ${todayDeficit >= 0 ? "#4caf50" : "#e74c3c"}30` }}>
+            <div style={{ fontSize: 12, color: "#999" }}>Deficit</div>
+            <div style={{ fontSize: 24, fontWeight: 800, color: todayDeficit >= 0 ? "#2e7d32" : "#c62828" }}>
+              {todayDeficit >= 0 ? "↓" : "↑"} {Math.abs(todayDeficit)}
+            </div>
+          </div>
         </div>
 
         {todayLogs.length > 0 && (
-          <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 14, fontSize: 13 }}>
-            <thead>
-              <tr style={{ borderBottom: "2px solid #eee" }}>
-                <th style={{ textAlign: "left", padding: "6px 8px", color: "#888", fontWeight: 600 }}>Exercise</th>
-                <th style={{ textAlign: "center", padding: "6px 8px", color: "#888", fontWeight: 600 }}>Detail</th>
-                <th style={{ textAlign: "center", padding: "6px 8px", color: "#888", fontWeight: 600 }}>Calories</th>
-                <th style={{ textAlign: "center", padding: "6px 8px", color: "#888", fontWeight: 600 }}></th>
-              </tr>
-            </thead>
-            <tbody>
-              {todayLogs.map((log) => (
-                <tr key={log.id} style={{ borderBottom: "1px solid #f0f0f0" }}>
-                  <td style={{ padding: "8px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      {log.imageThumbnail ? (
-                        <img src={log.imageThumbnail} alt="" style={{ width: 32, height: 32, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />
-                      ) : (
-                        <div style={{ width: 32, height: 32, borderRadius: 6, background: CATEGORY_COLORS[log.category] ? `${CATEGORY_COLORS[log.category]}15` : "#f0f0f0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>🏋️</div>
-                      )}
-                      <div>
-                        <div style={{ fontWeight: 600 }}>{log.exerciseName}</div>
-                        <span style={{
-                          fontSize: 11, padding: "1px 6px", borderRadius: 8,
-                          background: CATEGORY_COLORS[log.category] ? `${CATEGORY_COLORS[log.category]}15` : "#f0f0f0",
-                          color: CATEGORY_COLORS[log.category] || "#888",
-                        }}>{log.category}</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td style={{ textAlign: "center", fontSize: 12, color: "#555" }}>{formatLogDetail(log)}</td>
-                  <td style={{ textAlign: "center", fontWeight: 700, color: "#e74c3c" }}>{log.caloriesBurned}</td>
-                  <td style={{ textAlign: "center" }}>
-                    <button
-                      onClick={() => handleDelete(log.id)}
-                      disabled={deleting === log.id}
-                      style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, color: "#ccc" }}
-                      title="Delete"
-                    >{deleting === log.id ? "…" : "🗑️"}</button>
-                  </td>
+          <div className="nutrition-table-wrap" style={{ marginTop: 14 }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, minWidth: 450 }}>
+              <thead>
+                <tr style={{ borderBottom: "2px solid #eee" }}>
+                  <th style={{ textAlign: "left", padding: "6px 8px", color: "#888", fontWeight: 600 }}>Exercise</th>
+                  <th style={{ textAlign: "center", padding: "6px 8px", color: "#888", fontWeight: 600 }}>Detail</th>
+                  <th style={{ textAlign: "center", padding: "6px 8px", color: "#888", fontWeight: 600 }}>Calories</th>
+                  <th style={{ textAlign: "center", padding: "6px 8px", color: "#888", fontWeight: 600 }}></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {todayLogs.map((log) => (
+                  <tr key={log.id} style={{ borderBottom: "1px solid #f0f0f0" }}>
+                    <td style={{ padding: "8px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        {log.imageThumbnail ? (
+                          <img src={log.imageThumbnail} alt="" style={{ width: 32, height: 32, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />
+                        ) : (
+                          <div style={{ width: 32, height: 32, borderRadius: 6, background: CATEGORY_COLORS[log.category] ? `${CATEGORY_COLORS[log.category]}15` : "#f0f0f0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>🏋️</div>
+                        )}
+                        <div>
+                          <div style={{ fontWeight: 600 }}>{log.exerciseName}</div>
+                          <span style={{
+                            fontSize: 11, padding: "1px 6px", borderRadius: 8,
+                            background: CATEGORY_COLORS[log.category] ? `${CATEGORY_COLORS[log.category]}15` : "#f0f0f0",
+                            color: CATEGORY_COLORS[log.category] || "#888",
+                          }}>{log.category}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td style={{ textAlign: "center", fontSize: 12, color: "#555" }}>{formatLogDetail(log)}</td>
+                    <td style={{ textAlign: "center", fontWeight: 700, color: "#e74c3c" }}>{log.caloriesBurned}</td>
+                    <td style={{ textAlign: "center" }}>
+                      <button
+                        onClick={() => handleDelete(log.id)}
+                        disabled={deleting === log.id}
+                        style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, color: "#ccc" }}
+                        title="Delete"
+                      >{deleting === log.id ? "…" : "🗑️"}</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
       {/* ── 60-day Workout History ── */}
-      <div style={card}>
-        <h3 style={heading}>📅 Workout History (60 Days)</h3>
+      <div className={cardCls}>
+        <h3 className={headingCls}>
+          <span className="text-2xl">📅</span> Workout History (60 Days)
+        </h3>
         {logsByDate.length === 0 ? (
           <p style={{ color: "#999", textAlign: "center", padding: "20px 0" }}>No workouts logged yet. Start by searching for an exercise above!</p>
         ) : (
@@ -663,7 +675,7 @@ const WorkoutTab = () => {
           </div>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 };
 

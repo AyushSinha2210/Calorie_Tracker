@@ -3,11 +3,9 @@ import { getCached, setCache } from "../utils/nutritionCache.js";
 // ── Groq Models with RPD (Requests Per Day) limits ──
 // Free-tier Groq limits vary by model. We track usage and switch proactively.
 const MODEL_CONFIG = [
-  { name: "llama-3.1-8b-instant",                          rpd: 14400 },
-  { name: "llama-3.3-70b-versatile",                       rpd: 14400 },
-  { name: "meta-llama/llama-4-scout-17b-16e-instruct",     rpd: 14400 },
-  { name: "meta-llama/llama-4-maverick-17b-128e-instruct", rpd: 14400 },
-  { name: "qwen/qwen3-32b",                                rpd: 14400 },
+  { name: "llama-3.1-8b-instant", rpd: 14400 },
+  { name: "llama-3.3-70b-versatile", rpd: 14400 },
+  { name: "meta-llama/llama-4-scout-17b-16e-instruct", rpd: 14400 },
 ];
 
 const GROQ_MODELS = MODEL_CONFIG.map(m => m.name);
@@ -242,8 +240,9 @@ export async function estimateNutritionWithGroq(items) {
 Food items:
 ${items.map((i) => `- ${i.name}: ${i.grams}g`).join("\n")}
 
-Return ONLY valid JSON, no markdown, no explanation:
-{"items":[{"name":"food name","grams":100,"calories":0,"protein":0}]}`;
+Return ONLY valid JSON, no markdown, no explanation (ensure calories and protein are numbers, not strings):
+{"items":[{"name":"food name","grams":100,"calories":150,"protein":5}]}
+`;
 
   const messages = [
     { role: "system", content: "You are a precise nutrition calculator. Return only valid JSON." },
@@ -277,8 +276,9 @@ export async function analyzeNutritionFromText(text) {
 
 Analyze this meal: "${text}"
 
-Return ONLY valid JSON:
-{"items":[{"name":"food name","quantity":"human readable quantity","calories":0,"protein":0}],"total_calories":0,"total_protein":0}`;
+Return ONLY valid JSON (ensure calories and protein are numbers, not strings):
+{"items":[{"name":"food name","quantity":"human readable quantity","calories":150,"protein":5}],"total_calories":150,"total_protein":5}
+`;
 
   const messages = [
     { role: "system", content: "You are a precise Indian food nutrition calculator. Return only valid JSON." },

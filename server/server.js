@@ -1,16 +1,16 @@
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
 import { detectFoodFromImage, getGeminiModelStatus } from "./services/geminiService.js";
 import { estimateNutritionWithGroq, analyzeNutritionFromText, getGroqModelStatus } from "./services/groqService.js";
 import { getNutrition } from "./services/fatsecretService.js";
 import { scheduleUserCleanup, deleteInactiveUsers } from "./services/userCleanupService.js";
-import { sendOnDemandReport, scheduleEmailReports } from "./services/emailReportService.js";
+import { sendOnDemandReport, sendOnDemandReportWithData, scheduleEmailReports } from "./services/emailReportService.js";
 import { searchExercises, getCategories, getExerciseInfo, calculateCaloriesBurned } from "./services/workoutService.js";
+import { generateCoachComment, buildPrompt, getPromptTemplates } from "./services/aiCoachService.js";
 import multer from "multer";
-import { createGzip } from "zlib";
+import { createGzip } from "node:zlib";
 
-dotenv.config();
 const app = express();
 app.use(cors());
 
@@ -150,6 +150,19 @@ app.post("/email-report/send", async (req, res) => {
   }
 });
 
+// POST /email-report/send-with-data — send report using data from frontend (no Firebase Admin needed)
+app.post("/email-report/send-with-data", async (req, res) => {
+  try {
+    const { email, displayName, frequency, foodLogs, weightLogs, workoutLogs, maintenanceCalories } = req.body;
+    if (!email) return res.status(400).json({ error: "email is required" });
+    await sendOnDemandReportWithData({ email, displayName, frequency, foodLogs, weightLogs, workoutLogs, maintenanceCalories });
+    res.json({ message: `Report sent to ${email}` });
+  } catch (e) {
+    console.error("[EMAIL] On-demand send-with-data failed:", e.message);
+    res.status(500).json({ error: "Failed to send report", details: e.message });
+  }
+});
+
 // ── Workout endpoints ──
 
 // GET /workout/search?term=push+up — search wger exercises
@@ -211,6 +224,40 @@ app.post("/workout/calculate", (req, res) => {
   } catch (e) {
     console.error("[WORKOUT] Calc failed:", e.message);
     res.status(500).json({ error: "Calorie calculation failed", details: e.message });
+  }
+});
+
+// ── AI Coach endpoints ──
+
+// POST /ai-coach/comment — get an AI comment on a food/workout entry
+app.post("/ai-coach/comment", async (req, res) => {
+  try {
+    const { tone, activityType, entry, dayStats, userProfile } = req.body;
+    if (!entry) return res.status(400).json({ error: "entry is required" });
+    const result = await generateCoachComment({ tone, activityType, entry, dayStats, userProfile });
+    res.json(result);
+  } catch (e) {
+    console.error("[AI COACH] Comment failed:", e.message);
+    res.json({ comment: "Coach is taking a break! Try again in a moment. 💪", error: true });
+  }
+});
+
+// GET /ai-coach/templates — list available prompt templates
+app.get("/ai-coach/templates", (req, res) => {
+  res.json(getPromptTemplates());
+});
+
+// POST /ai-coach/prompt — build a ready-to-paste prompt from template + profile
+app.post("/ai-coach/prompt", (req, res) => {
+  try {
+    const { templateKey, profile } = req.body;
+    if (!templateKey) return res.status(400).json({ error: "templateKey is required" });
+    const result = buildPrompt(templateKey, profile || {});
+    if (result.error) return res.status(400).json(result);
+    res.json(result);
+  } catch (e) {
+    console.error("[AI COACH] Prompt build failed:", e.message);
+    res.status(500).json({ error: "Failed to build prompt", details: e.message });
   }
 });
 

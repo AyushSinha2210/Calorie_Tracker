@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
+import API_URL from "../config";
 
 const btn = (bg, extra = {}) => ({ padding: "10px 20px", background: bg, color: "white", border: "none", borderRadius: "5px", cursor: "pointer", ...extra });
 const inp = (extra = {}) => ({ width: "100%", padding: "10px", marginBottom: "10px", borderRadius: "5px", border: "1px solid #ddd", ...extra });
@@ -76,7 +77,7 @@ const FoodForm = () => {
     try {
       const formData = new FormData();
       formData.append("image", imageFile);
-      const res = await fetch("http://localhost:5000/analyze-food-image", { method: "POST", body: formData });
+      const res = await fetch(`${API_URL}/analyze-food-image`, { method: "POST", body: formData });
       if (!res.ok) {
         const errData = await res.json().catch(() => null);
         throw new Error(errData?.error || errData?.details || "Failed to analyze image");
@@ -93,7 +94,7 @@ const FoodForm = () => {
     if (!confirmationData?.items) return alert("No items to calculate nutrition for");
     setSaveLoading(true);
     try {
-      const res = await fetch("http://localhost:5000/calculate-nutrition", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ items: confirmationData.items }) });
+      const res = await fetch(`${API_URL}/calculate-nutrition`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ items: confirmationData.items }) });
       const data = await res.json();
       if (!res.ok) throw new Error(data.details || data.error || "Failed to calculate nutrition");
       setConfirmationData({ ...confirmationData, items: data.items, totals: { calories: data.total_calories, protein: data.total_protein }, needsNutritionCalculation: false });
@@ -122,7 +123,7 @@ const FoodForm = () => {
     if (!aiText) return alert("Please enter some food text to analyze");
     setAiLoading(true);
     try {
-      const res = await fetch("http://localhost:5000/analyze-food", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: aiText }) });
+      const res = await fetch(`${API_URL}/analyze-food`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: aiText }) });
       const data = await res.json();
       if (data.note) {
         // Server returned a note (quota issue, fallback, etc) — show it but still display any items
@@ -173,7 +174,7 @@ const FoodForm = () => {
   const lookupFoodNutrition = async (index, foodName, quantity) => {
     try {
       setLookupLoading((p) => ({ ...p, [index]: true }));
-      const res = await fetch("http://localhost:5000/lookup-food", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: foodName, quantity }) });
+      const res = await fetch(`${API_URL}/lookup-food`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: foodName, quantity }) });
       if (!res.ok) return alert(`Could not find nutrition data for "${foodName}"`);
       const data = await res.json();
       const items = [...confirmationData.items];

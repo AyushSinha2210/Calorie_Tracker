@@ -28,12 +28,12 @@ const getMonthLabel = (dateStr) => {
   return d.toLocaleDateString("en-US", { month: "long", year: "numeric" });
 };
 
-const MonthlyNutritionTable = ({ allLogs = [] }) => {
+const MonthlyNutritionTable = ({ allLogs = [], workoutLogs = [], maintenanceCalories = 0 }) => {
   const [expandedDate, setExpandedDate] = useState(null);
 
   const dates = useMemo(() => getDateRange(60), []);
 
-  // Group logs by date
+  // Group food logs by date
   const logsByDate = useMemo(() => {
     const map = {};
     for (const log of allLogs) {
@@ -42,6 +42,16 @@ const MonthlyNutritionTable = ({ allLogs = [] }) => {
     }
     return map;
   }, [allLogs]);
+
+  // Group workout logs by date
+  const workoutsByDate = useMemo(() => {
+    const map = {};
+    for (const log of workoutLogs) {
+      if (!map[log.date]) map[log.date] = [];
+      map[log.date].push(log);
+    }
+    return map;
+  }, [workoutLogs]);
 
   // Group dates by month
   const months = useMemo(() => {
@@ -84,12 +94,15 @@ const MonthlyNutritionTable = ({ allLogs = [] }) => {
               <span style={styles.col}>Items</span>
               <span style={styles.col}>Calories</span>
               <span style={styles.col}>Protein</span>
+              <span style={styles.col}>Deficit</span>
             </div>
 
             {monthDates.map((date) => {
               const dayLogs = logsByDate[date] || [];
               const cal = Math.round(dayLogs.reduce((s, l) => s + (l.calories || 0), 0));
               const pro = Math.round(dayLogs.reduce((s, l) => s + (l.protein || 0), 0) * 10) / 10;
+              const dayBurned = (workoutsByDate[date] || []).reduce((s, l) => s + (l.caloriesBurned || 0), 0);
+              const deficit = maintenanceCalories - cal + dayBurned;
               const isExpanded = expandedDate === date;
               const today = new Date().toISOString().split("T")[0];
               const isToday = date === today;
@@ -120,6 +133,9 @@ const MonthlyNutritionTable = ({ allLogs = [] }) => {
                     </span>
                     <span style={{ ...styles.col, color: pro > 0 ? "#2e7d32" : "#ccc" }}>
                       {pro > 0 ? `${pro}g` : "—"}
+                    </span>
+                    <span style={{ ...styles.col, fontWeight: 600, color: (dayLogs.length === 0 && !workoutsByDate[date]?.length) ? "#ccc" : deficit >= 0 ? "#2e7d32" : "#c62828" }}>
+                      {(dayLogs.length === 0 && !workoutsByDate[date]?.length) ? "—" : `${deficit >= 0 ? "↓" : "↑"}${Math.abs(deficit)}`}
                     </span>
                   </div>
 
@@ -167,6 +183,9 @@ const MonthlyNutritionTable = ({ allLogs = [] }) => {
                         <span style={{ fontWeight: "700" }}>Day Total</span>
                         <span>{cal} kcal</span>
                         <span>{pro}g protein</span>
+                        <span style={{ fontWeight: 700, color: deficit >= 0 ? "#2e7d32" : "#c62828" }}>
+                          {deficit >= 0 ? "↓" : "↑"}{Math.abs(deficit)} deficit
+                        </span>
                       </div>
                     </div>
                   )}

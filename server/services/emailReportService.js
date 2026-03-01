@@ -92,26 +92,41 @@ function getDateRange(frequency) {
 // ── HTML table builders ──
 const style = `
 <style>
-  body { font-family: 'Segoe UI', Arial, sans-serif; color: #333; background: #f5f6fa; margin: 0; padding: 20px; }
-  .container { max-width: 650px; margin: 0 auto; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
-  .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 24px; text-align: center; }
-  .header h1 { color: #fff; margin: 0; font-size: 22px; }
-  .header p { color: rgba(255,255,255,0.85); margin: 6px 0 0; font-size: 13px; }
-  .section { padding: 20px 24px; }
-  .section h2 { color: #667eea; font-size: 16px; margin: 0 0 12px; border-bottom: 2px solid #667eea22; padding-bottom: 6px; }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 16px; }
-  th { background: #667eea; color: #fff; padding: 8px 10px; text-align: left; font-weight: 600; }
-  td { padding: 7px 10px; border-bottom: 1px solid #eee; }
-  tr:nth-child(even) td { background: #f8f9ff; }
-  .summary-row td { font-weight: 700; background: #f0f1ff !important; border-top: 2px solid #667eea; }
-  .positive { color: #e74c3c; }
-  .negative { color: #27ae60; }
-  .neutral { color: #888; }
-  .footer { text-align: center; padding: 16px; font-size: 11px; color: #999; background: #f5f6fa; }
-  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
-  .badge-daily { background: #e8f5e9; color: #27ae60; }
-  .badge-weekly { background: #e3f2fd; color: #1976d2; }
-  .badge-monthly { background: #fce4ec; color: #c62828; }
+  body { font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; color: #1f2937; background: #f9fafb; margin: 0; padding: 24px 12px; }
+  .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1); border: 1px solid #f3f4f6; }
+  .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 36px 24px; text-align: center; }
+  .header h1 { color: #ffffff; margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -0.025em; }
+  .header p { color: rgba(255,255,255,0.9); margin: 8px 0 0; font-size: 14px; font-weight: 500; }
+  .section { padding: 28px 24px; border-bottom: 1px solid #f3f4f6; }
+  .section:last-of-type { border-bottom: none; }
+  .section h2 { color: #111827; font-size: 18px; font-weight: 700; margin: 0 0 16px; display: flex; align-items: center; letter-spacing: -0.01em; }
+  table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 14px; margin-bottom: 8px; border-radius: 12px; overflow: hidden; border: 1px solid #e5e7eb; }
+  th { background: #f9fafb; color: #4b5563; padding: 12px 14px; text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #e5e7eb; }
+  td { padding: 12px 14px; border-bottom: 1px solid #e5e7eb; color: #374151; }
+  tr:last-child td { border-bottom: none; }
+  tr:nth-child(even) td { background-color: #fafafa; }
+  .summary-row td { font-weight: 700; background: #f3f4f6 !important; color: #111827; }
+  .positive { color: #dc2626; font-weight: 600; }
+  .negative { color: #16a34a; font-weight: 600; }
+  .neutral { color: #9ca3af; }
+  .footer { text-align: center; padding: 24px; font-size: 12px; color: #6b7280; background: #f9fafb; }
+  .badge { display: inline-block; padding: 4px 10px; border-radius: 9999px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+  .badge-daily { background: #dcfce7; color: #16a34a; }
+  .badge-weekly { background: #e0e7ff; color: #4338ca; }
+  .badge-monthly { background: #fee2e2; color: #dc2626; }
+  
+  /* Responsive styles for email */
+  .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; margin-bottom: 16px; border-radius: 12px; }
+  .table-responsive table { margin-bottom: 0; min-width: 450px; }
+  
+  @media only screen and (max-width: 600px) {
+    body { padding: 12px 8px !important; }
+    .container { width: 100% !important; border-radius: 16px !important; }
+    .header { padding: 24px 16px !important; }
+    .header h1 { font-size: 22px !important; }
+    .section { padding: 20px 16px !important; }
+    th, td { padding: 10px 8px !important; font-size: 13px !important; }
+  }
 </style>`;
 
 function buildWeightTable(weightLogs) {
@@ -146,7 +161,7 @@ function buildWeightTable(weightLogs) {
     const cls = Number(totalChange) > 0 ? "positive" : Number(totalChange) < 0 ? "negative" : "neutral";
     rows += `<tr class="summary-row"><td colspan="2"><strong>Total Change</strong></td><td class="${cls}"><strong>${Number(totalChange) > 0 ? "+" : ""}${totalChange} kg</strong></td></tr>`;
   }
-  return `<table><tr><th>Date</th><th>Weight</th><th>Change</th></tr>${rows}</table>`;
+  return `<div class="table-responsive"><table><tr><th>Date</th><th>Weight</th><th>Change</th></tr>${rows}</table></div>`;
 }
 
 function buildDailyNutritionTable(foodLogs) {
@@ -171,22 +186,27 @@ function buildDailyNutritionTable(foodLogs) {
   const avgPro = Math.round(totalPro / dates.length);
   rows += `<tr class="summary-row"><td><strong>Average</strong></td><td><strong>${avgCal}</strong></td><td><strong>${avgPro} g</strong></td></tr>`;
   rows += `<tr class="summary-row"><td><strong>Total</strong></td><td><strong>${Math.round(totalCal)}</strong></td><td><strong>${Math.round(totalPro)} g</strong></td></tr>`;
-  return `<table><tr><th>Date</th><th>Calories</th><th>Protein</th></tr>${rows}</table>`;
+  return `<div class="table-responsive"><table><tr><th>Date</th><th>Calories</th><th>Protein</th></tr>${rows}</table></div>`;
 }
 
 function buildFoodItemsTable(foodLogs) {
   if (!foodLogs.length) return "";
   let rows = "";
   for (const log of foodLogs) {
-    rows += `<tr><td>${log.date}</td><td>${log.name || log.food || "—"}</td><td>${log.quantity || "—"}</td><td>${Math.round(log.calories || 0)}</td><td>${Math.round(log.protein || 0)} g</td></tr>`;
+    const qty = log.quantity || "—";
+    const cal = Math.round(log.calories || 0);
+    const pro = Math.round(log.protein || 0);
+    rows += `<tr><td>${log.date}</td><td>${log.name || log.food || "—"}</td><td>${qty}</td><td>${cal}</td><td>${pro} g</td></tr>`;
   }
   return `
     <div class="section">
       <h2>🍽️ Food Items Detail</h2>
-      <table>
-        <tr><th>Date</th><th>Food</th><th>Quantity</th><th>Calories</th><th>Protein</th></tr>
-        ${rows}
-      </table>
+      <div class="table-responsive">
+        <table>
+          <tr><th>Date</th><th>Food</th><th>Quantity</th><th>Calories</th><th>Protein</th></tr>
+          ${rows}
+        </table>
+      </div>
     </div>`;
 }
 
@@ -223,7 +243,7 @@ function buildWorkoutTable(workoutLogs) {
     rows += `<tr class="summary-row"><td><strong>Daily Avg</strong></td><td></td><td><strong>${avgMin} min</strong></td><td style="font-weight:700;color:#e74c3c;"><strong>🔥 ${avgCal} kcal</strong></td></tr>`;
   }
 
-  return `<table><tr><th>Date</th><th>Exercises</th><th>Duration</th><th>Calories Burned</th></tr>${rows}</table>`;
+  return `<div class="table-responsive"><table><tr><th>Date</th><th>Exercises</th><th>Duration</th><th>Calories Burned</th></tr>${rows}</table></div>`;
 }
 
 function buildWorkoutDetailTable(workoutLogs) {
@@ -250,17 +270,56 @@ function buildWorkoutDetailTable(workoutLogs) {
   return `
     <div class="section">
       <h2>🏋️ Workout Details</h2>
-      <table>
-        <tr><th>Date</th><th>Exercise</th><th>Category</th><th>Detail</th><th>Calories</th></tr>
-        ${rows}
-      </table>
+      <div class="table-responsive">
+        <table>
+          <tr><th>Date</th><th>Exercise</th><th>Category</th><th>Detail</th><th>Calories</th></tr>
+          ${rows}
+        </table>
+      </div>
     </div>`;
 }
 
-function buildEmailHtml(frequency, displayName, weightLogs, foodLogs, workoutLogs, dateRange) {
+function buildDeficitTable(foodLogs, workoutLogs, maintenanceCalories) {
+  if (!maintenanceCalories) return `<p style="color:#999;font-style:italic;">Maintenance calories not configured — update your profile to see deficit data.</p>`;
+
+  // Group food and workout by date
+  const foodByDate = {};
+  for (const log of foodLogs) {
+    if (!foodByDate[log.date]) foodByDate[log.date] = 0;
+    foodByDate[log.date] += log.calories || 0;
+  }
+  const workoutByDate = {};
+  for (const log of workoutLogs) {
+    if (!workoutByDate[log.date]) workoutByDate[log.date] = 0;
+    workoutByDate[log.date] += log.caloriesBurned || 0;
+  }
+  const allDates = [...new Set([...Object.keys(foodByDate), ...Object.keys(workoutByDate)])].sort();
+  if (!allDates.length) return `<p style="color:#999;font-style:italic;">No data to calculate deficit.</p>`;
+
+  let rows = "";
+  let totalDeficit = 0;
+  for (const date of allDates) {
+    const consumed = Math.round(foodByDate[date] || 0);
+    const burned = Math.round(workoutByDate[date] || 0);
+    const deficit = maintenanceCalories - consumed + burned;
+    totalDeficit += deficit;
+    const cls = deficit >= 0 ? "negative" : "positive";
+    rows += `<tr><td>${date}</td><td>${maintenanceCalories}</td><td>${consumed}</td><td>${burned}</td><td class="${cls}" style="font-weight:700;">${deficit >= 0 ? "\u2193" : "\u2191"}${Math.abs(deficit)}</td></tr>`;
+  }
+  const avgDeficit = Math.round(totalDeficit / allDates.length);
+  const avgCls = avgDeficit >= 0 ? "negative" : "positive";
+  rows += `<tr class="summary-row"><td><strong>Average</strong></td><td>${maintenanceCalories}</td><td></td><td></td><td class="${avgCls}" style="font-weight:700;"><strong>${avgDeficit >= 0 ? "\u2193" : "\u2191"}${Math.abs(avgDeficit)}</strong></td></tr>`;
+
+  return `<div class="table-responsive"><table><tr><th>Date</th><th>Maintenance</th><th>Consumed</th><th>Burned</th><th>Deficit</th></tr>${rows}</table></div>`;
+}
+
+function buildEmailHtml(frequency, displayName, weightLogs, foodLogs, workoutLogs, dateRange, maintenanceCalories) {
   const freqLabel = frequency.charAt(0).toUpperCase() + frequency.slice(1);
   const badgeCls = `badge-${frequency}`;
-  return `<!DOCTYPE html><html><head>${style}</head><body>
+  return `<!DOCTYPE html><html><head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    ${style}
+  </head><body>
 <div class="container">
   <div class="header">
     <h1>🏋️ Fitness Tracker Report</h1>
@@ -290,6 +349,11 @@ function buildEmailHtml(frequency, displayName, weightLogs, foodLogs, workoutLog
 
   ${buildWorkoutDetailTable(workoutLogs)}
 
+  <div class="section">
+    <h2>📉 Calorie Deficit</h2>
+    ${buildDeficitTable(foodLogs, workoutLogs, maintenanceCalories)}
+  </div>
+
   <div class="footer">
     You're receiving this because you subscribed to ${frequency} reports on AI Food &amp; Fitness Tracker.<br/>
     To change frequency or unsubscribe, update your settings in the app.
@@ -312,8 +376,23 @@ export async function sendReportForUser(uid, email, displayName, frequency) {
     console.log(`[EMAIL DEBUG] weightLogs sample:`, JSON.stringify(weightLogs.slice(0, 3)));
   }
 
+  // Compute maintenance calories from user profile
+  let maintenanceCalories = 0;
+  try {
+    const admin = (await import("firebase-admin")).default;
+    const userDoc = await admin.firestore().collection("users").doc(uid).get();
+    const p = userDoc.data();
+    if (p?.weight && p?.height && p?.age) {
+      const offset = p.gender === "female" ? -161 : 5;
+      const bmr = 10 * Number(p.weight) + 6.25 * Number(p.height) - 5 * Number(p.age) + offset;
+      maintenanceCalories = Math.round(bmr * 1.55);
+    }
+  } catch (e) {
+    console.error("[EMAIL] Failed to compute maintenance calories:", e.message);
+  }
+
   const freqLabel = frequency.charAt(0).toUpperCase() + frequency.slice(1);
-  const html = buildEmailHtml(frequency, displayName, weightLogs, foodLogs, workoutLogs, { start, end });
+  const html = buildEmailHtml(frequency, displayName, weightLogs, foodLogs, workoutLogs, { start, end }, maintenanceCalories);
 
   await getTransporter().sendMail({
     from: `"Fitness Tracker" <${process.env.EMAIL_USER}>`,
@@ -327,6 +406,24 @@ export async function sendReportForUser(uid, email, displayName, frequency) {
 // ── Send on-demand report (triggered by user) ──
 export async function sendOnDemandReport(uid, email, displayName, frequency) {
   return sendReportForUser(uid, email, displayName, frequency || "weekly");
+}
+
+/**
+ * Send on-demand report using data provided directly by the client.
+ * This does NOT require Firebase Admin — data comes from the frontend.
+ */
+export async function sendOnDemandReportWithData({ email, displayName, frequency, foodLogs, weightLogs, workoutLogs, maintenanceCalories }) {
+  const { start, end } = getDateRange(frequency || "weekly");
+  const freqLabel = (frequency || "weekly").charAt(0).toUpperCase() + (frequency || "weekly").slice(1);
+  const html = buildEmailHtml(frequency || "weekly", displayName, weightLogs || [], foodLogs || [], workoutLogs || [], { start, end }, maintenanceCalories || 0);
+
+  await getTransporter().sendMail({
+    from: `"Fitness Tracker" <${process.env.EMAIL_USER}>`,
+    to: email,
+    subject: `${freqLabel} Fitness Report (${start}${start !== end ? " – " + end : ""})`,
+    html,
+  });
+  console.log(`[EMAIL] Sent ${frequency || "weekly"} on-demand report (with client data) to ${email}`);
 }
 
 // ── Scheduled sends (per-user custom schedule) ──
@@ -405,19 +502,19 @@ function buildWeightReminderHtml(displayName, daysSince) {
     <h1>⚖️ Weight Check-in Reminder</h1>
     <p>It's been a while since your last weigh-in</p>
   </div>
-  <div class="section" style="text-align:center;">
-    <p style="font-size:16px;">Hi <strong>${displayName || "there"}</strong>,</p>
-    <p style="font-size:15px;color:#555;line-height:1.7;">
+  <div class="section" style="text-align:center; padding-top: 40px; padding-bottom: 40px;">
+    <p style="font-size:18px; color:#111827; margin-bottom: 8px;">Hi <strong>${displayName || "there"}</strong>,</p>
+    <p style="font-size:15px; color:#4b5563; line-height:1.7; max-width: 450px; margin: 0 auto;">
       ${daysSince
-        ? `It's been <strong style="color:#e74c3c;">${daysSince} days</strong> since you last logged your weight.`
-        : `You haven't logged your weight yet.`}
+      ? `It's been <strong style="color:#dc2626;">${daysSince} days</strong> since you last logged your weight.`
+      : `You haven't logged your weight yet.`}
       <br/>Regular tracking helps you stay on top of your fitness goals!
     </p>
-    <p style="margin-top:24px;">
-      <a href="#" style="display:inline-block;padding:12px 32px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;">
+    <div style="margin-top:32px;">
+      <a href="https://fitness-tracker-app.com" style="display:inline-block; padding:14px 36px; background:linear-gradient(135deg, #667eea, #764ba2); color:#ffffff; border-radius:12px; text-decoration:none; font-weight:700; font-size:16px; box-shadow: 0 4px 6px -1px rgba(102, 126, 234, 0.4);">
         Open Fitness Tracker
       </a>
-    </p>
+    </div>
   </div>
   <div class="footer">
     This reminder is sent when no weight entry is recorded for ${WEIGHT_STALE_DAYS}+ days.<br/>

@@ -1,4 +1,4 @@
-# Contributing to AI Powered Indian Food and Fitness Tracker
+# Contributing to AI Powered Food & Fitness Tracker
 
 Thank you for considering contributing to this project! 🎉
 
@@ -112,26 +112,26 @@ Feature requests are welcome! Please:
 
 ### High Priority
 
-- [ ] Add meal history/tracking
-- [ ] Implement data visualization (charts)
-- [ ] Add more Indian food items to training
-- [ ] Improve UI/UX design
-- [ ] Add loading states and error handling
+- [ ] Add unit and integration tests
+- [ ] Implement dark mode
+- [ ] Add export feature (CSV/PDF reports)
+- [ ] Multi-language / i18n support
+- [ ] Progressive Web App (PWA) features
 
 ### Medium Priority
 
-- [ ] Add unit tests
-- [ ] Implement dark mode
-- [ ] Add export feature (CSV/PDF)
-- [ ] Multi-language support
-- [ ] Progressive Web App (PWA) features
+- [ ] Social sharing features
+- [ ] Recipe suggestions based on macros
+- [ ] Integration with fitness devices / Apple Health / Google Fit
+- [ ] Barcode scanner for packaged foods
+- [ ] Meal planning / scheduling
 
 ### Nice to Have
 
-- [ ] Social sharing features
-- [ ] Recipe suggestions
-- [ ] Workout tracking
-- [ ] Integration with fitness devices
+- [ ] Streak tracking & gamification badges
+- [ ] Community leaderboard
+- [ ] Voice input for food entries
+- [ ] Water intake tracking
 
 ## 📝 Commit Message Guidelines
 
