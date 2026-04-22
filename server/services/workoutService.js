@@ -17,6 +17,13 @@
  */
 
 const WGER_BASE = "https://wger.de/api/v2";
+const SEARCH_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+const SEARCH_PAGE_SIZE = 200;
+const SEARCH_MAX_RESULTS = 15;
+const SEARCH_MAX_PAGES = 12;
+const SEARCH_BOOTSTRAP_BUDGET_MS = 7000;
+const SEARCH_PER_REQUEST_BUDGET_MS = 4000;
+const UPSTREAM_TIMEOUT_MS = 8000;
 
 // ── MET values by wger category ID ──
 const CATEGORY_MET = {
@@ -67,6 +74,9 @@ let _categories = null;
 
 // ── Exercise info cache (avoids repeated wger API calls) ──
 const _exerciseInfoCache = new Map();
+let _translationIndex = [];
+let _translationIndexFetchedAt = 0;
+let _translationIndexPromise = null;
 
 // ── Equipment classification ──
 // Weighted equipment: requires external weight
@@ -85,29 +95,127 @@ function normalizeSearchText(value) {
     .replaceAll(/[^a-z0-9]+/g, "");
 }
 
-async function fetchTranslationMatches(term, maxResults) {
-  const needle = normalizeSearchText(term);
-  const matches = [];
-  const seen = new Set();
-  let nextUrl = `${WGER_BASE}/exercise-translation/?language=2&ordering=name&limit=100`;
+async function fetchJsonWithTimeout(url, timeoutMs = UPSTREAM_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    if (!res.ok) throw new Error(`wger request failed: ${res.status}`);
+    return await res.json();
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
-  while (nextUrl && matches.length < maxResults) {
-    const res = await fetch(nextUrl);
-    if (!res.ok) throw new Error(`wger translation search failed: ${res.status}`);
-    const data = await res.json();
+function pickEnglishName(item) {
+  const t = (item?.translations || []).find((x) => x.language === 2);
+  return t?.name || item?.name || "";
+}
+
+function collectMatchesFromIndex(index, term, maxResults) {
+  const needle = normalizeSearchText(term);
+  const seen = new Set();
+  const matches = [];
+
+  for (const item of index) {
+    if (!item?.nameNorm?.includes(needle)) continue;
+    if (seen.has(item.id)) continue;
+    seen.add(item.id);
+    matches.push({ id: item.id, name: item.name });
+    if (matches.length >= maxResults) break;
+  }
+
+  return matches;
+}
+
+async function buildTranslationIndex() {
+  const start = Date.now();
+  const collected = [];
+  let nextUrl = `${WGER_BASE}/exerciseinfo/?language=2&ordering=id&limit=${SEARCH_PAGE_SIZE}`;
+  let page = 0;
+
+  while (nextUrl && page < SEARCH_MAX_PAGES && (Date.now() - start) < SEARCH_BOOTSTRAP_BUDGET_MS) {
+    let data;
+    try {
+      data = await fetchJsonWithTimeout(nextUrl);
+    } catch {
+      break;
+    }
 
     for (const item of data.results || []) {
-      const name = item.name || "";
-      if (!normalizeSearchText(name).includes(needle)) continue;
-      if (seen.has(item.exercise)) continue;
-      seen.add(item.exercise);
-      matches.push({ id: item.exercise, name });
-      if (matches.length >= maxResults) break;
+      const name = pickEnglishName(item);
+      if (!name) continue;
+      collected.push({
+        id: item.id,
+        name,
+        nameNorm: normalizeSearchText(name),
+      });
     }
 
     nextUrl = data.next;
+    page += 1;
   }
 
+  if (collected.length > 0) {
+    _translationIndex = collected;
+    _translationIndexFetchedAt = Date.now();
+  }
+}
+
+async function ensureTranslationIndex(maxWaitMs = SEARCH_PER_REQUEST_BUDGET_MS) {
+  const fresh = _translationIndex.length > 0 && (Date.now() - _translationIndexFetchedAt) < SEARCH_CACHE_TTL_MS;
+  if (fresh) return;
+
+  if (!_translationIndexPromise) {
+    _translationIndexPromise = buildTranslationIndex().finally(() => {
+      _translationIndexPromise = null;
+    });
+  }
+
+  if (maxWaitMs <= 0) return;
+
+  await Promise.race([
+    _translationIndexPromise,
+    new Promise((resolve) => setTimeout(resolve, maxWaitMs)),
+  ]);
+}
+
+async function fetchTranslationMatches(term, maxResults) {
+  await ensureTranslationIndex();
+
+  let matches = collectMatchesFromIndex(_translationIndex, term, maxResults);
+  if (matches.length > 0) return matches;
+
+  // Fallback for very new exercises not yet in cache; keep it bounded and fast.
+  const start = Date.now();
+  const seen = new Set();
+  const fallback = [];
+  const needle = normalizeSearchText(term);
+  let nextUrl = `${WGER_BASE}/exerciseinfo/?language=2&ordering=id&limit=${SEARCH_PAGE_SIZE}`;
+  let page = 0;
+
+  while (nextUrl && page < 3 && fallback.length < maxResults && (Date.now() - start) < SEARCH_PER_REQUEST_BUDGET_MS) {
+    let data;
+    try {
+      data = await fetchJsonWithTimeout(nextUrl, 5000);
+    } catch {
+      break;
+    }
+
+    for (const item of data.results || []) {
+      const name = pickEnglishName(item);
+      if (!normalizeSearchText(name).includes(needle)) continue;
+      if (seen.has(item.id)) continue;
+      seen.add(item.id);
+      fallback.push({ id: item.id, name });
+      if (fallback.length >= maxResults) break;
+    }
+
+    nextUrl = data.next;
+    page += 1;
+  }
+
+  matches = fallback;
   return matches;
 }
 
@@ -151,9 +259,7 @@ export async function getCategories() {
 export async function getExerciseInfo(baseId) {
   if (_exerciseInfoCache.has(baseId)) return _exerciseInfoCache.get(baseId);
 
-  const res = await fetch(`${WGER_BASE}/exerciseinfo/${baseId}/?format=json`);
-  if (!res.ok) throw new Error(`wger exerciseinfo failed: ${res.status}`);
-  const data = await res.json();
+  const data = await fetchJsonWithTimeout(`${WGER_BASE}/exerciseinfo/${baseId}/?format=json`);
 
   const equipment = (data.equipment || []).map(e => ({ id: e.id, name: e.name }));
   const categoryId = data.category?.id || null;
@@ -209,9 +315,14 @@ export function classifyExerciseType(exerciseName, categoryId, equipment = []) {
  */
 export async function searchExercises(term) {
   if (!term || term.trim().length < 2) return [];
-
-  const matches = await fetchTranslationMatches(term, 15);
-  return Promise.all(matches.map(mapTranslationMatch));
+  try {
+    const matches = await fetchTranslationMatches(term, SEARCH_MAX_RESULTS);
+    if (matches.length === 0) return [];
+    return Promise.all(matches.map(mapTranslationMatch));
+  } catch {
+    // Do not fail the whole endpoint due to upstream instability.
+    return [];
+  }
 }
 
 /**
