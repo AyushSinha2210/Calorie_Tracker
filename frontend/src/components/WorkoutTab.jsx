@@ -28,6 +28,7 @@ const WorkoutTab = ({ allFoodLogs = [], maintenanceCalories = 0 }) => {
   const [search, setSearch] = useState("");
   const [results, setResults] = useState([]);
   const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState("");
   const [selected, setSelected] = useState(null);
 
   // Exercise info from wger (equipment, inputType, muscles)
@@ -93,14 +94,25 @@ const WorkoutTab = ({ allFoodLogs = [], maintenanceCalories = 0 }) => {
     setSelected(null);
     setExerciseInfo(null);
     setCalcResult(null);
+    setSearchError("");
     clearTimeout(debounceRef.current);
     if (term.trim().length < 2) { setResults([]); return; }
     debounceRef.current = setTimeout(async () => {
       setSearching(true);
       try {
         const res = await apiFetch(`/workout/search?term=${encodeURIComponent(term)}`);
-        if (res.ok) setResults(await res.json());
-      } catch { } finally { setSearching(false); }
+        if (res.ok) {
+          setResults(await res.json());
+          setSearchError("");
+        } else {
+          const err = await res.json().catch(() => ({}));
+          setResults([]);
+          setSearchError(err.error || "Workout search failed");
+        }
+      } catch (err) {
+        setResults([]);
+        setSearchError(err.message || "Could not reach workout search");
+      } finally { setSearching(false); }
     }, 400);
   }, []);
 
@@ -112,6 +124,7 @@ const WorkoutTab = ({ allFoodLogs = [], maintenanceCalories = 0 }) => {
     setCalcResult(null);
     setExerciseInfo(null);
     setSaveError("");
+    setSearchError("");
     resetInputFields();
 
     // Fetch exercise details (equipment, muscles, inputType)
@@ -320,6 +333,12 @@ const WorkoutTab = ({ allFoodLogs = [], maintenanceCalories = 0 }) => {
           />
           {searching && (
             <div style={{ position: "absolute", right: 12, top: 30, color: "var(--text-muted)", fontSize: 12 }}>Searching...</div>
+          )}
+
+          {searchError && (
+            <div style={{ marginTop: 8, color: "#dc2626", fontSize: 13 }}>
+              {searchError}
+            </div>
           )}
 
           {/* Dropdown results */}

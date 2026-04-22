@@ -77,6 +77,61 @@ const BODYWEIGHT_EQUIPMENT = new Set([7, 6, 4, 5, 11]); // none(bodyweight), Pul
 // Isometric exercise name patterns
 const ISOMETRIC_PATTERNS = /\b(plank|hold|wall.?sit|isometric|l.?sit|hollow.?body|bridge|dead.?hang|side.?bridge)\b/i;
 
+function normalizeSearchText(value) {
+  return (value || "")
+    .toLowerCase()
+    .normalize("NFKD")
+    .replaceAll(/[\u0300-\u036f]/g, "")
+    .replaceAll(/[^a-z0-9]+/g, "");
+}
+
+async function fetchTranslationMatches(term, maxResults) {
+  const needle = normalizeSearchText(term);
+  const matches = [];
+  const seen = new Set();
+  let nextUrl = `${WGER_BASE}/exercise-translation/?language=2&ordering=name&limit=100`;
+
+  while (nextUrl && matches.length < maxResults) {
+    const res = await fetch(nextUrl);
+    if (!res.ok) throw new Error(`wger translation search failed: ${res.status}`);
+    const data = await res.json();
+
+    for (const item of data.results || []) {
+      const name = item.name || "";
+      if (!normalizeSearchText(name).includes(needle)) continue;
+      if (seen.has(item.exercise)) continue;
+      seen.add(item.exercise);
+      matches.push({ id: item.exercise, name });
+      if (matches.length >= maxResults) break;
+    }
+
+    nextUrl = data.next;
+  }
+
+  return matches;
+}
+
+async function mapTranslationMatch(match) {
+  try {
+    const info = await getExerciseInfo(match.id);
+    return {
+      id: info.id,
+      name: info.name || match.name,
+      category: info.categoryName || getCategoryName(info.categoryId) || "Other",
+      image: info.image ? `https://wger.de${info.image}` : null,
+      imageThumbnail: info.imageThumbnail ? `https://wger.de${info.imageThumbnail}` : null,
+    };
+  } catch {
+    return {
+      id: match.id,
+      name: match.name,
+      category: "Other",
+      image: null,
+      imageThumbnail: null,
+    };
+  }
+}
+
 /**
  * Fetch all exercise categories from wger (cached).
  */
@@ -105,17 +160,22 @@ export async function getExerciseInfo(baseId) {
   const categoryName = data.category?.name || "Other";
   const exerciseName = (data.translations || []).find(t => t.language === 2)?.name
     || data.name || "";
+  const image = data.images?.[0]?.image || data.images?.[0]?.image_url || null;
+  const imageThumbnail = data.images?.[0]?.image_thumbnail || data.images?.[0]?.image_thumbnail_url || image;
 
   const inputType = classifyExerciseType(exerciseName, categoryId, equipment);
 
   const info = {
     id: data.id,
+    name: exerciseName,
     categoryId,
     categoryName,
     equipment,
     muscles: (data.muscles || []).map(m => ({ id: m.id, name: m.name_en || m.name })),
     musclesSecondary: (data.muscles_secondary || []).map(m => ({ id: m.id, name: m.name_en || m.name })),
     inputType,
+    image,
+    imageThumbnail,
   };
 
   _exerciseInfoCache.set(baseId, info);
@@ -150,28 +210,8 @@ export function classifyExerciseType(exerciseName, categoryId, equipment = []) {
 export async function searchExercises(term) {
   if (!term || term.trim().length < 2) return [];
 
-  const url = `${WGER_BASE}/exercise/search/?term=${encodeURIComponent(term)}&language=english&format=json`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`wger search failed: ${res.status}`);
-  const data = await res.json();
-
-  // Deduplicate by base_id (some exercises appear multiple times)
-  const seen = new Set();
-  const results = [];
-  for (const s of data.suggestions || []) {
-    const d = s.data;
-    if (seen.has(d.base_id)) continue;
-    seen.add(d.base_id);
-    results.push({
-      id: d.base_id,
-      name: d.name,
-      category: d.category || "Other",
-      image: d.image ? `https://wger.de${d.image}` : null,
-      imageThumbnail: d.image_thumbnail ? `https://wger.de${d.image_thumbnail}` : null,
-    });
-    if (results.length >= 15) break;
-  }
-  return results;
+  const matches = await fetchTranslationMatches(term, 15);
+  return Promise.all(matches.map(mapTranslationMatch));
 }
 
 /**
