@@ -11,6 +11,7 @@ import Dashboard from './Pages/Dashboard';
 import ProfileSetup from './Pages/ProfileSetup';
 import Profile from './Pages/Profile';
 import ProtectedRoute from './components/ProtectedRoute';
+import BrandLogo from './components/BrandLogo';
 
 /* ─── Animation helpers ───────────────────────────────────────── */
 const stagger  = { hidden: {}, visible: { transition: { staggerChildren: 0.1 } } };
@@ -29,7 +30,7 @@ const FEATURES = [
 ];
 
 const HOW_IT_WORKS = [
-  { num: '01', title: 'Create your profile',  desc: 'Enter your age, weight, height, and calorie goal. FoodCal calculates your maintenance and targets.' },
+  { num: '01', title: 'Create your profile',  desc: 'Enter your age, weight, height, and calorie goal. FoodCalo calculates your maintenance and targets.' },
   { num: '02', title: 'Log meals effortlessly', desc: 'Type, speak, or snap a photo. Our AI parses ingredients, portions, and nutrition — no manual entry.' },
   { num: '03', title: 'Get coached daily',     desc: 'AI Coach reacts to every log with personalized tips, motivation, or tough love in your chosen tone.' },
   { num: '04', title: 'Track & transform',     desc: 'Watch your charts evolve, hit your targets, and receive weekly email reports on your progress.' },
@@ -55,12 +56,12 @@ const DashboardMockup = () => (
           <div className="w-2.5 h-2.5 rounded-full bg-yellow-400" />
           <div className="w-2.5 h-2.5 rounded-full bg-green-400" />
         </div>
-        <div className="flex-1 text-center text-[11px] text-surface-400 dark:text-surface-500 font-medium">FoodCal — Dashboard</div>
+        <div className="flex-1 text-center text-[11px] text-surface-400 dark:text-surface-500 font-medium">FoodCalo — Dashboard</div>
       </div>
       {/* Fake nav */}
       <div className="flex items-center gap-4 px-5 py-3 border-b border-surface-100 dark:border-surface-800">
         <div className="flex items-center gap-1.5">
-          <div className="w-5 h-5 rounded bg-brand-600 flex items-center justify-center text-white text-[7px] font-bold">FC</div>
+          <BrandLogo compact />
           <span className="text-xs font-semibold text-surface-900 dark:text-surface-100">Dashboard</span>
         </div>
         <div className="flex gap-3 ml-auto">
@@ -204,8 +205,7 @@ const Home = () => {
       {/* ── Nav ── */}
       <nav className="relative z-10 flex items-center justify-between px-6 md:px-10 py-5 max-w-6xl mx-auto">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center text-white text-[9px] font-bold tracking-tight">FC</div>
-          <span className="text-lg font-bold tracking-tight text-surface-900 dark:text-surface-100">FoodCal</span>
+          <BrandLogo />
         </div>
         <div className="flex items-center gap-3">
           <Link to="/login" className="text-sm font-medium text-surface-600 dark:text-surface-400 hover:text-surface-900 dark:hover:text-white transition-colors">
@@ -238,7 +238,7 @@ const Home = () => {
         </motion.h1>
 
         <motion.p variants={fadeUp} className="mt-6 text-lg md:text-xl text-surface-500 dark:text-surface-400 max-w-xl leading-relaxed">
-          FoodCal is an AI-powered calorie tracker, nutrition log, and workout coach for health-focused individuals who want to log meals, track protein, and stay consistent.
+          FoodCalo is an AI-powered calorie tracker, nutrition log, and workout coach for health-focused individuals who want to log meals, track protein, and stay consistent.
         </motion.p>
 
         <motion.div variants={fadeUp} className="mt-10 flex flex-wrap gap-4 justify-center">
@@ -279,7 +279,7 @@ const Home = () => {
             Everything you need to<br /><span className="text-gradient">log food and train smarter</span>
           </h2>
           <p className="mt-3 text-surface-500 dark:text-surface-400 max-w-lg mx-auto">
-            Built for individuals serious about their health. FoodCal keeps your calorie tracking, workout tracking, and nutrition planning in one place.
+            Built for individuals serious about their health. FoodCalo keeps your calorie tracking, workout tracking, and nutrition planning in one place.
           </p>
         </motion.div>
 
@@ -314,7 +314,7 @@ const Home = () => {
               Log meals in natural language.
             </h3>
             <p className="text-surface-500 dark:text-surface-400 leading-relaxed mb-4">
-              Type what you ate in natural language. FoodCal's AI parses ingredients, estimates portions, and calculates calories, protein, and macros without barcode scanning.
+              Type what you ate in natural language. FoodCalo's AI parses ingredients, estimates portions, and calculates calories, protein, and macros without barcode scanning.
             </p>
             <ul className="space-y-2 text-sm text-surface-600 dark:text-surface-300">
               {['Multi-item parsing in one sentence', 'Indian, Asian, Western cuisines supported', 'Learns from your log history'].map((t,i) => (
@@ -405,7 +405,7 @@ const Home = () => {
             Ready to take control of your health?
           </h2>
           <p className="text-surface-300 dark:text-surface-600 mb-8 max-w-md mx-auto">
-            Join health-focused individuals who trust FoodCal's AI calorie tracker and workout coach to keep nutrition and training on point every day.
+            Join health-focused individuals who trust FoodCalo's AI calorie tracker and workout coach to keep nutrition and training on point every day.
           </p>
           <Link to="/register" className="inline-block px-8 py-3.5 rounded-xl bg-white dark:bg-surface-900 text-surface-900 dark:text-surface-100 font-semibold text-base hover:bg-surface-50 dark:hover:bg-surface-800 transition-all active:scale-[0.97]">
             Get started for free <span className="ml-1">→</span>
@@ -424,7 +424,7 @@ const Home = () => {
                 Track calories, log workouts, and coach your habits.
               </h2>
               <p className="mt-4 text-surface-500 dark:text-surface-400 leading-relaxed">
-                FoodCal combines meal logging, calorie tracking, protein tracking, workout tracking, and AI coaching in one simple web app. Use it to understand what you eat, monitor daily energy balance, and make progress toward fitness goals.
+                FoodCalo combines meal logging, calorie tracking, protein tracking, workout tracking, and AI coaching in one simple web app. Use it to understand what you eat, monitor daily energy balance, and make progress toward fitness goals.
               </p>
               <p className="mt-3 text-surface-500 dark:text-surface-400 leading-relaxed">
                 The dashboard is built for fast input, clear nutrition data, and a clean experience on mobile and desktop so search engines and people can quickly understand the product value.
@@ -442,16 +442,16 @@ const Home = () => {
           <div className="mt-10 grid md:grid-cols-2 gap-4">
             {[
               {
-                q: 'What is FoodCal?',
-                a: 'FoodCal is an AI calorie tracker and workout coach for people who want a single place to log meals, monitor protein, and follow training progress.'
+                q: 'What is FoodCalo?',
+                a: 'FoodCalo is an AI calorie tracker and workout coach for people who want a single place to log meals, monitor protein, and follow training progress.'
               },
               {
                 q: 'How does the AI food log work?',
-                a: 'You type or describe a meal in natural language, and FoodCal estimates ingredients, portions, calories, and protein so logging stays fast.'
+                a: 'You type or describe a meal in natural language, and FoodCalo estimates ingredients, portions, calories, and protein so logging stays fast.'
               },
               {
                 q: 'Does it help with workout tracking?',
-                a: 'Yes. FoodCal tracks exercises, sets, reps, calories burned, and your daily balance alongside nutrition.'
+                a: 'Yes. FoodCalo tracks exercises, sets, reps, calories burned, and your daily balance alongside nutrition.'
               },
               {
                 q: 'Who is it for?',
@@ -470,7 +470,7 @@ const Home = () => {
       {/* Footer */}
       <footer className="relative z-10 border-t border-surface-200 dark:border-surface-800 py-8 text-center">
         <p className="text-xs text-surface-400 dark:text-surface-600">
-          Built with React, Firebase & AI — <span className="text-surface-500 dark:text-surface-500">© {new Date().getFullYear()} FoodCal</span>
+          Built with React, Firebase & AI — <span className="text-surface-500 dark:text-surface-500">© {new Date().getFullYear()} FoodCalo</span>
         </p>
       </footer>
     </div>

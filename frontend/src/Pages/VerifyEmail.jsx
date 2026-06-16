@@ -3,6 +3,7 @@ import { sendEmailVerification, signOut } from "firebase/auth";
 import { auth } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import BrandLogo from "../components/BrandLogo";
 
 function VerifyEmail() {
   const { user } = useAuth();
@@ -59,6 +60,9 @@ function VerifyEmail() {
   return (
     <div style={wrapper}>
       <div style={card}>
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 18 }}>
+          <BrandLogo />
+        </div>
         <div style={{ fontSize: "48px", textAlign: "center", marginBottom: "10px" }}>📧</div>
         <h2 style={{ margin: "0 0 8px", textAlign: "center", color: "var(--text)" }}>Verify Your Email</h2>
         <p style={{ color: "var(--text-secondary)", textAlign: "center", margin: "0 0 20px", fontSize: "14px" }}>

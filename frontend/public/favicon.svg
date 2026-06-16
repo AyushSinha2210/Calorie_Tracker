@@ -1,0 +1,12 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="favicon-foodcalo" x1="12" y1="10" x2="52" y2="54" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#22C55E" />
+      <stop offset="1" stop-color="#16A34A" />
+    </linearGradient>
+  </defs>
+  <circle cx="32" cy="32" r="28" fill="url(#favicon-foodcalo)" />
+  <circle cx="32" cy="32" r="18" fill="white" fill-opacity="0.14" />
+  <path d="M20 32c0-6.63 5.37-12 12-12 2.82 0 5.4.98 7.44 2.62L25.27 43.1A11.98 11.98 0 0 1 20 32Z" fill="#F8FAFC" fill-opacity="0.98" />
+  <path d="M44 32c0 6.63-5.37 12-12 12-2.82 0-5.4-.98-7.44-2.62l14.17-18.48A11.98 11.98 0 0 1 44 32Z" fill="#DCFCE7" />
+</svg>

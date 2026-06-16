@@ -4,6 +4,7 @@ import { auth, googleProvider, db } from "../firebase";
 import { useNavigate, Link } from "react-router-dom";
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { motion } from "framer-motion";
+import BrandLogo from "../components/BrandLogo";
 
 const inputCls = "w-full px-4 py-3 rounded-lg border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all placeholder:text-surface-400 dark:placeholder:text-surface-600 text-surface-900 dark:text-surface-100 text-sm";
 const labelCls = "block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1.5";
@@ -63,8 +64,7 @@ function Login() {
         {/* Logo */}
         <div className="flex justify-center mb-8">
           <Link to="/" className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-lg bg-brand-600 flex items-center justify-center text-white text-[10px] font-bold tracking-tight">FC</div>
-            <span className="text-lg font-bold tracking-tight text-surface-900 dark:text-surface-100">FoodCal</span>
+            <BrandLogo />
           </Link>
         </div>
 

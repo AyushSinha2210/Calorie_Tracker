@@ -3,7 +3,7 @@
   <circle cx="220" cy="140" r="180" fill="#4F46E5" fill-opacity="0.18"/>
   <circle cx="1010" cy="520" r="220" fill="#F59E0B" fill-opacity="0.14"/>
   <rect x="72" y="72" width="1056" height="486" rx="36" fill="#FAFAF9" fill-opacity="0.04" stroke="#FFFFFF" stroke-opacity="0.12"/>
-  <text x="110" y="190" fill="#F8FAFC" font-family="Inter, Arial, sans-serif" font-size="72" font-weight="800">FoodCal</text>
+  <text x="110" y="190" fill="#F8FAFC" font-family="Inter, Arial, sans-serif" font-size="72" font-weight="800">FoodCalo</text>
   <text x="110" y="265" fill="#FACC15" font-family="Inter, Arial, sans-serif" font-size="44" font-weight="700">AI Calorie Tracker &amp; Workout Coach</text>
   <text x="110" y="338" fill="#E2E8F0" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="500">Log meals, track protein, monitor workouts, and stay consistent.</text>
   <g transform="translate(110 390)">

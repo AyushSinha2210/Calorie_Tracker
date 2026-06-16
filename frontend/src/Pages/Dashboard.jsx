@@ -14,6 +14,7 @@ import EmailSettings from "../components/EmailSettings";
 import FeedbackModal from "../components/FeedbackModal";
 import AICoach from "../components/AICoach";
 import PromptGenerator from "../components/PromptGenerator";
+import BrandLogo from "../components/BrandLogo";
 import { collection, query, where, onSnapshot, getDocs, deleteDoc, doc, orderBy } from "firebase/firestore";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -273,8 +274,7 @@ const Dashboard = () => {
         >
           {/* Logo & brand */}
           <div className="flex items-center gap-2.5 px-5 pt-5 pb-4">
-            <div className="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center text-white text-[9px] font-bold tracking-tight">FC</div>
-            <span className="text-base font-bold tracking-tight text-surface-50">FoodCal</span>
+            <BrandLogo compact />
           </div>
 
           {/* User info */}
@@ -339,8 +339,7 @@ const Dashboard = () => {
         <div className="md:hidden fixed top-0 left-0 right-0 z-20 bg-surface-950/90 backdrop-blur-xl border-b border-surface-800/60">
           <div className="flex items-center justify-between px-4 py-2.5">
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-brand-600 flex items-center justify-center text-white text-[8px] font-bold">FC</div>
-              <span className="text-sm font-bold text-surface-50">FoodCal</span>
+              <BrandLogo compact />
             </div>
             <div className="flex items-center gap-1">
               <button onClick={() => navigate("/profile")} className="p-1 rounded-full transition-all" title="Profile">
