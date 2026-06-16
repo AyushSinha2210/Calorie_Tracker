@@ -30,10 +30,10 @@ const FEATURES = [
 ];
 
 const HOW_IT_WORKS = [
-  { num: '01', title: 'Create your profile',  desc: 'Enter your age, weight, height, and calorie goal. FoodCalo calculates your maintenance and targets.' },
-  { num: '02', title: 'Log meals effortlessly', desc: 'Type, speak, or snap a photo. Our AI parses ingredients, portions, and nutrition — no manual entry.' },
-  { num: '03', title: 'Get coached daily',     desc: 'AI Coach reacts to every log with personalized tips, motivation, or tough love in your chosen tone.' },
-  { num: '04', title: 'Track & transform',     desc: 'Watch your charts evolve, hit your targets, and receive weekly email reports on your progress.' },
+  { num: '01', title: 'Create your profile',  desc: 'Enter your age, weight, height, and calorie goal. FoodCalo uses that data to estimate maintenance and daily targets.' },
+  { num: '02', title: 'Log meals effortlessly', desc: 'Type, speak, or snap a photo. The app parses ingredients, portions, and nutrition so you can save time.' },
+  { num: '03', title: 'Get coached daily',     desc: 'The coach reacts to each entry with personalized tips, motivation, or tough love in your chosen tone.' },
+  { num: '04', title: 'Track & transform',     desc: 'Watch your charts evolve, hit your targets, and receive weekly email reports that keep momentum going.' },
 ];
 
 const SEO_KEYWORDS = [
@@ -238,7 +238,7 @@ const Home = () => {
         </motion.h1>
 
         <motion.p variants={fadeUp} className="mt-6 text-lg md:text-xl text-surface-500 dark:text-surface-400 max-w-xl leading-relaxed">
-          FoodCalo is an AI-powered calorie tracker, nutrition log, and workout coach for health-focused individuals who want to log meals, track protein, and stay consistent.
+          FoodCalo is an AI-powered nutrition companion for health-focused individuals who want to keep meals, protein, and habits organized.
         </motion.p>
 
         <motion.div variants={fadeUp} className="mt-10 flex flex-wrap gap-4 justify-center">
@@ -279,7 +279,7 @@ const Home = () => {
             Everything you need to<br /><span className="text-gradient">log food and train smarter</span>
           </h2>
           <p className="mt-3 text-surface-500 dark:text-surface-400 max-w-lg mx-auto">
-            Built for individuals serious about their health. FoodCalo keeps your calorie tracking, workout tracking, and nutrition planning in one place.
+            Built for individuals serious about their health. FoodCalo keeps meal logging, training notes, and nutrition planning in one place.
           </p>
         </motion.div>
 
@@ -314,7 +314,7 @@ const Home = () => {
               Log meals in natural language.
             </h3>
             <p className="text-surface-500 dark:text-surface-400 leading-relaxed mb-4">
-              Type what you ate in natural language. FoodCalo's AI parses ingredients, estimates portions, and calculates calories, protein, and macros without barcode scanning.
+              Type what you ate in natural language. FoodCalo parses ingredients, estimates portions, and calculates calories, protein, and macros without barcode scanning.
             </p>
             <ul className="space-y-2 text-sm text-surface-600 dark:text-surface-300">
               {['Multi-item parsing in one sentence', 'Indian, Asian, Western cuisines supported', 'Learns from your log history'].map((t,i) => (
@@ -348,10 +348,10 @@ const Home = () => {
               <span className="w-1.5 h-1.5 rounded-full bg-accent-500" /> Personalized
             </span>
             <h3 className="text-2xl md:text-3xl font-extrabold text-surface-900 dark:text-surface-50 tracking-tight mt-3 mb-3">
-              A workout coach that gets you.
+              A coach that gets you.
             </h3>
             <p className="text-surface-500 dark:text-surface-400 leading-relaxed mb-4">
-              Choose your coach's personality — strict drill sergeant, sarcastic friend, or gentle motivator. It reacts to every log with context-aware advice tuned to your calorie target, workouts, and stats.
+              Choose your coach's personality — strict drill sergeant, sarcastic friend, or gentle motivator. It reacts to each entry with context-aware advice tuned to your goals and stats.
             </p>
             <ul className="space-y-2 text-sm text-surface-600 dark:text-surface-300">
               {['4 unique coaching personalities', 'Reacts to meals & workouts in real-time', 'Daily summary insights'].map((t,i) => (
@@ -385,7 +385,7 @@ const Home = () => {
           {HOW_IT_WORKS.map((step, i) => (
             <motion.div key={i} variants={scaleUp} className="card p-6 relative overflow-hidden group">
               <span className="absolute top-4 right-5 text-5xl font-extrabold text-surface-100 dark:text-surface-800 group-hover:text-brand-100 dark:group-hover:text-brand-900/30 transition-colors duration-500 select-none">{step.num}</span>
-              <h4 className="text-base font-bold text-surface-900 dark:text-surface-100 mb-1.5 relative">{step.title}</h4>
+              <h3 className="text-base font-bold text-surface-900 dark:text-surface-100 mb-1.5 relative">{step.title}</h3>
               <p className="text-sm text-surface-500 dark:text-surface-400 leading-relaxed relative">{step.desc}</p>
             </motion.div>
           ))}
@@ -405,7 +405,7 @@ const Home = () => {
             Ready to take control of your health?
           </h2>
           <p className="text-surface-300 dark:text-surface-600 mb-8 max-w-md mx-auto">
-            Join health-focused individuals who trust FoodCalo's AI calorie tracker and workout coach to keep nutrition and training on point every day.
+            Join health-focused individuals who rely on FoodCalo to turn meal notes, training sessions, and habits into consistent progress.
           </p>
           <Link to="/register" className="inline-block px-8 py-3.5 rounded-xl bg-white dark:bg-surface-900 text-surface-900 dark:text-surface-100 font-semibold text-base hover:bg-surface-50 dark:hover:bg-surface-800 transition-all active:scale-[0.97]">
             Get started for free <span className="ml-1">→</span>
@@ -443,7 +443,7 @@ const Home = () => {
             {[
               {
                 q: 'What is FoodCalo?',
-                a: 'FoodCalo is an AI calorie tracker and workout coach for people who want a single place to log meals, monitor protein, and follow training progress.'
+                a: 'FoodCalo is a calorie and habit app for people who want a single place to log meals, monitor protein, and follow training progress.'
               },
               {
                 q: 'How does the AI food log work?',
@@ -451,16 +451,38 @@ const Home = () => {
               },
               {
                 q: 'Does it help with workout tracking?',
-                a: 'Yes. FoodCalo tracks exercises, sets, reps, calories burned, and your daily balance alongside nutrition.'
+                a: 'Yes. FoodCalo records exercises, sets, reps, energy burn, and your daily balance alongside nutrition.'
               },
               {
                 q: 'Who is it for?',
-                a: 'It is built for health-focused users who want practical calorie tracking, meal logging, and coaching without unnecessary friction.'
+                a: 'It is built for health-focused users who want practical meal logging, training insight, and coaching without unnecessary friction.'
               },
             ].map((item) => (
               <div key={item.q} className="rounded-2xl border border-surface-200 dark:border-surface-700 p-5 bg-surface-50 dark:bg-surface-900/50">
                 <h3 className="text-base font-bold text-surface-900 dark:text-surface-100 mb-2">{item.q}</h3>
                 <p className="text-sm leading-relaxed text-surface-500 dark:text-surface-400">{item.a}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-10 grid md:grid-cols-3 gap-4">
+            {[
+              {
+                title: 'Meal clarity',
+                text: 'See what is actually in a meal, how it affects your budget, and where you can make a simpler choice next time.'
+              },
+              {
+                title: 'Training context',
+                text: 'Keep exercise notes next to nutrition data so workouts and meals are reviewed together instead of in separate silos.'
+              },
+              {
+                title: 'Consistency loop',
+                text: 'Use weekly reports, habit reminders, and progress feedback to stay engaged long enough to see real change.'
+              },
+            ].map((card) => (
+              <div key={card.title} className="rounded-2xl border border-surface-200 dark:border-surface-700 bg-white/70 dark:bg-surface-900/50 p-5">
+                <h3 className="text-base font-bold text-surface-900 dark:text-surface-100 mb-2">{card.title}</h3>
+                <p className="text-sm leading-relaxed text-surface-500 dark:text-surface-400">{card.text}</p>
               </div>
             ))}
           </div>
