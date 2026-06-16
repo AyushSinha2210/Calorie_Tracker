@@ -1,4 +1,5 @@
-import React from 'react';
+/* global globalThis */
+import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Link, Navigate, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion, useScroll, useTransform } from 'framer-motion';
 import { ThemeProvider } from './context/ThemeContext';
@@ -32,6 +33,15 @@ const HOW_IT_WORKS = [
   { num: '02', title: 'Log meals effortlessly', desc: 'Type, speak, or snap a photo. Our AI parses ingredients, portions, and nutrition — no manual entry.' },
   { num: '03', title: 'Get coached daily',     desc: 'AI Coach reacts to every log with personalized tips, motivation, or tough love in your chosen tone.' },
   { num: '04', title: 'Track & transform',     desc: 'Watch your charts evolve, hit your targets, and receive weekly email reports on your progress.' },
+];
+
+const SEO_KEYWORDS = [
+  'AI calorie tracker',
+  'workout coach',
+  'nutrition log',
+  'meal logging',
+  'protein tracking',
+  'fitness goals',
 ];
 
 /* ─── Fake dashboard mockup for hero ───────────────────────────── */
@@ -217,18 +227,18 @@ const Home = () => {
         <motion.div variants={fadeUp} className="mb-6">
           <span className="pill border border-brand-200 dark:border-brand-800 text-brand-700 dark:text-brand-400 bg-brand-50 dark:bg-brand-900/30">
             <span className="w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse-soft" />
-            AI-Powered Calorie Intelligence
+            AI calorie tracker and workout coach
           </span>
         </motion.div>
 
         <motion.h1 variants={fadeUp} className="text-4xl sm:text-5xl md:text-7xl font-extrabold tracking-display text-surface-900 dark:text-surface-50 leading-[1.08]">
           Your personal<br />
-          <span className="text-gradient">calorie & workout</span><br />
-          assistant.
+          <span className="text-gradient">AI calorie tracker</span><br />
+          and workout coach.
         </motion.h1>
 
         <motion.p variants={fadeUp} className="mt-6 text-lg md:text-xl text-surface-500 dark:text-surface-400 max-w-xl leading-relaxed">
-          FoodCal is an AI-powered assistant built for health-focused individuals. Snap meals, track workouts, get coached — all with the precision your goals demand.
+          FoodCal is an AI-powered calorie tracker, nutrition log, and workout coach for health-focused individuals who want to log meals, track protein, and stay consistent.
         </motion.p>
 
         <motion.div variants={fadeUp} className="mt-10 flex flex-wrap gap-4 justify-center">
@@ -266,10 +276,10 @@ const Home = () => {
       >
         <motion.div variants={fadeUp} className="text-center mb-14">
           <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-surface-900 dark:text-surface-50">
-            Everything you need to<br /><span className="text-gradient">stay on track</span>
+            Everything you need to<br /><span className="text-gradient">log food and train smarter</span>
           </h2>
           <p className="mt-3 text-surface-500 dark:text-surface-400 max-w-lg mx-auto">
-            Built for individuals serious about their health. No fluff — just intelligent tools that work.
+            Built for individuals serious about their health. FoodCal keeps your calorie tracking, workout tracking, and nutrition planning in one place.
           </p>
         </motion.div>
 
@@ -301,10 +311,10 @@ const Home = () => {
               <span className="w-1.5 h-1.5 rounded-full bg-brand-500" /> AI-Powered
             </span>
             <h3 className="text-2xl md:text-3xl font-extrabold text-surface-900 dark:text-surface-50 tracking-tight mt-3 mb-3">
-              Just describe your meal.
+              Log meals in natural language.
             </h3>
             <p className="text-surface-500 dark:text-surface-400 leading-relaxed mb-4">
-              Type what you ate in natural language. FoodCal's AI parses ingredients, estimates portions, and calculates exact calories & protein — no barcode scanning needed.
+              Type what you ate in natural language. FoodCal's AI parses ingredients, estimates portions, and calculates calories, protein, and macros without barcode scanning.
             </p>
             <ul className="space-y-2 text-sm text-surface-600 dark:text-surface-300">
               {['Multi-item parsing in one sentence', 'Indian, Asian, Western cuisines supported', 'Learns from your log history'].map((t,i) => (
@@ -338,10 +348,10 @@ const Home = () => {
               <span className="w-1.5 h-1.5 rounded-full bg-accent-500" /> Personalized
             </span>
             <h3 className="text-2xl md:text-3xl font-extrabold text-surface-900 dark:text-surface-50 tracking-tight mt-3 mb-3">
-              A coach that gets you.
+              A workout coach that gets you.
             </h3>
             <p className="text-surface-500 dark:text-surface-400 leading-relaxed mb-4">
-              Choose your coach's personality — strict drill sergeant, sarcastic friend, or gentle motivator. They react to every log with context-aware advice tuned to your stats.
+              Choose your coach's personality — strict drill sergeant, sarcastic friend, or gentle motivator. It reacts to every log with context-aware advice tuned to your calorie target, workouts, and stats.
             </p>
             <ul className="space-y-2 text-sm text-surface-600 dark:text-surface-300">
               {['4 unique coaching personalities', 'Reacts to meals & workouts in real-time', 'Daily summary insights'].map((t,i) => (
@@ -395,13 +405,67 @@ const Home = () => {
             Ready to take control of your health?
           </h2>
           <p className="text-surface-300 dark:text-surface-600 mb-8 max-w-md mx-auto">
-            Join health-focused individuals who trust FoodCal's AI to keep their nutrition and fitness on point — every single day.
+            Join health-focused individuals who trust FoodCal's AI calorie tracker and workout coach to keep nutrition and training on point every day.
           </p>
           <Link to="/register" className="inline-block px-8 py-3.5 rounded-xl bg-white dark:bg-surface-900 text-surface-900 dark:text-surface-100 font-semibold text-base hover:bg-surface-50 dark:hover:bg-surface-800 transition-all active:scale-[0.97]">
             Get started for free <span className="ml-1">→</span>
           </Link>
         </div>
       </motion.section>
+
+      <section className="relative z-10 max-w-5xl mx-auto px-6 pb-24">
+        <div className="card p-8 md:p-10">
+          <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-8 items-start">
+            <div>
+              <span className="pill border border-surface-200 dark:border-surface-700 text-surface-600 dark:text-surface-300 bg-surface-50 dark:bg-surface-800 text-xs mb-4">
+                SEO summary
+              </span>
+              <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-surface-900 dark:text-surface-50">
+                Track calories, log workouts, and coach your habits.
+              </h2>
+              <p className="mt-4 text-surface-500 dark:text-surface-400 leading-relaxed">
+                FoodCal combines meal logging, calorie tracking, protein tracking, workout tracking, and AI coaching in one simple web app. Use it to understand what you eat, monitor daily energy balance, and make progress toward fitness goals.
+              </p>
+              <p className="mt-3 text-surface-500 dark:text-surface-400 leading-relaxed">
+                The dashboard is built for fast input, clear nutrition data, and a clean experience on mobile and desktop so search engines and people can quickly understand the product value.
+              </p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {SEO_KEYWORDS.map((keyword) => (
+                <div key={keyword} className="rounded-xl border border-surface-200 dark:border-surface-700 bg-white/70 dark:bg-surface-900/60 px-4 py-3 text-sm font-medium text-surface-700 dark:text-surface-300">
+                  {keyword}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-10 grid md:grid-cols-2 gap-4">
+            {[
+              {
+                q: 'What is FoodCal?',
+                a: 'FoodCal is an AI calorie tracker and workout coach for people who want a single place to log meals, monitor protein, and follow training progress.'
+              },
+              {
+                q: 'How does the AI food log work?',
+                a: 'You type or describe a meal in natural language, and FoodCal estimates ingredients, portions, calories, and protein so logging stays fast.'
+              },
+              {
+                q: 'Does it help with workout tracking?',
+                a: 'Yes. FoodCal tracks exercises, sets, reps, calories burned, and your daily balance alongside nutrition.'
+              },
+              {
+                q: 'Who is it for?',
+                a: 'It is built for health-focused users who want practical calorie tracking, meal logging, and coaching without unnecessary friction.'
+              },
+            ].map((item) => (
+              <div key={item.q} className="rounded-2xl border border-surface-200 dark:border-surface-700 p-5 bg-surface-50 dark:bg-surface-900/50">
+                <h3 className="text-base font-bold text-surface-900 dark:text-surface-100 mb-2">{item.q}</h3>
+                <p className="text-sm leading-relaxed text-surface-500 dark:text-surface-400">{item.a}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* Footer */}
       <footer className="relative z-10 border-t border-surface-200 dark:border-surface-800 py-8 text-center">
@@ -447,9 +511,33 @@ const AnimatedRoutes = () => {
 const App = () => (
   <ThemeProvider>
     <BrowserRouter>
+      <SeoAndAnalytics />
       <AnimatedRoutes />
     </BrowserRouter>
   </ThemeProvider>
 );
+
+const SeoAndAnalytics = () => {
+  useEffect(() => {
+    const gaId = process.env.REACT_APP_GA_MEASUREMENT_ID;
+    if (!gaId || document.getElementById('foodcal-ga')) return;
+
+    const script = document.createElement('script');
+    script.id = 'foodcal-ga';
+    script.async = true;
+    script.src = `https://www.googletagmanager.com/gtag/js?id=${gaId}`;
+    document.head.appendChild(script);
+
+    globalThis.dataLayer = globalThis.dataLayer || [];
+    function gtag() {
+      globalThis.dataLayer.push(arguments);
+    }
+    globalThis.gtag = globalThis.gtag || gtag;
+    globalThis.gtag('js', new Date());
+    globalThis.gtag('config', gaId, { anonymize_ip: true });
+  }, []);
+
+  return null;
+};
 
 export default App;

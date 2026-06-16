@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://calorie-tracker-six-chi.vercel.app/sitemap.xml
