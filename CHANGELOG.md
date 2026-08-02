@@ -36,3 +36,6 @@
 ### 2026-08-02 10:25:10 - perf(server): implement sliding window rate limiter for scan endpoints
 - Commit #12: Automated milestone tracking and feature verification.
 
+### 2026-08-02 11:42:50 - feat(nutrition): add gram multiplier scaling for composite dishes
+- Commit #13: Automated milestone tracking and feature verification.
+
