@@ -237,3 +237,6 @@
 ### 2026-08-08 19:18:40 - perf(vision): add image dimension normalization before AI submission
 - Commit #79: Automated milestone tracking and feature verification.
 
+### 2026-08-08 20:32:05 - docs(api): document REST endpoints for workout and meal operations
+- Commit #80: Automated milestone tracking and feature verification.
+
