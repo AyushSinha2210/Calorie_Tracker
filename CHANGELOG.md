@@ -213,3 +213,6 @@
 ### 2026-08-08 09:12:35 - feat(server): configure express server with security headers and CORS
 - Commit #71: Automated milestone tracking and feature verification.
 
+### 2026-08-08 10:25:10 - perf(server): implement sliding window rate limiter for scan endpoints
+- Commit #72: Automated milestone tracking and feature verification.
+
