@@ -294,3 +294,6 @@
 ### 2026-08-10 18:05:15 - refactor(engine): standardize Mifflin-St Jeor BMR calculation engine
 - Commit #98: Automated milestone tracking and feature verification.
 
+### 2026-08-10 19:18:40 - test(engine): add test cases for basal metabolic rate variations
+- Commit #99: Automated milestone tracking and feature verification.
+

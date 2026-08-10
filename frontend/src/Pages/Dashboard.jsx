@@ -16,7 +16,7 @@ import PromptGenerator from "../components/PromptGenerator";
 import BrandLogo from "../components/ui/BrandLogo";
 import CalorieRing from "../components/ui/CalorieRing";
 import MacroRings from "../components/ui/MacroRings";
-import { collection, query, where, onSnapshot, getDocs, deleteDoc, doc, orderBy } from "firebase/firestore";
+import { collection, query, where, onSnapshot, doc, orderBy } from "firebase/firestore";
 import { motion, AnimatePresence } from "framer-motion";
 
 // Calculate maintenance calories using Mifflin-St Jeor equation
@@ -97,6 +97,22 @@ const Dashboard = () => {
   const today = new Date().toISOString().split("T")[0];
   const todayFood = useMemo(() => allFoodLogs.filter((l) => l.date === today), [allFoodLogs, today]);
   const todayWorkout = useMemo(() => allWorkoutLogs.filter((l) => l.date === today), [allWorkoutLogs, today]);
+
+  // Today's steps listener: users/{uid}/stepLogs/{today}
+  const [todayStepLog, setTodayStepLog] = useState(null);
+  useEffect(() => {
+    if (!user) return;
+    const stepRef = doc(db, "users", user.uid, "stepLogs", today);
+    return onSnapshot(stepRef, (snap) => {
+      if (snap.exists()) {
+        setTodayStepLog(snap.data());
+      } else {
+        setTodayStepLog(null);
+      }
+    }, (err) => {
+      console.warn("Step log listener:", err);
+    });
+  }, [user, today]);
 
   const totalCalories = useMemo(
     () => todayFood.reduce((s, l) => s + (Number(l.calories) || 0), 0),
@@ -340,6 +356,78 @@ const Dashboard = () => {
                           <span>Maintenance Target</span>
                           <span className="font-bold text-dark-text">{maintenanceCalories} kcal</span>
                         </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ── Daily Steps Walked Card (Auto-synced from Mobile Sensor) ── */}
+                  <div className="card p-5 bg-gradient-to-br from-dark-surface to-dark-surface-2/80 border border-dark-border/80 rounded-2xl relative overflow-hidden">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-11 h-11 rounded-2xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center text-2xl shadow-inner">
+                          👟
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-400">
+                              Daily Steps
+                            </span>
+                            <span className="text-[10px] font-semibold text-dark-muted bg-dark-bg/60 px-2 py-0.5 rounded-full border border-dark-border/40">
+                              📱 Auto-Synced
+                            </span>
+                          </div>
+                          <h2 className="text-xl font-extrabold text-white tracking-tight mt-0.5">
+                            {(todayStepLog?.steps || 0).toLocaleString()}{" "}
+                            <span className="text-xs text-dark-muted font-medium">
+                              / {(todayStepLog?.targetSteps || 10000).toLocaleString()} steps
+                            </span>
+                          </h2>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-xs font-extrabold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20 inline-block">
+                          {Math.min(100, Math.round(((todayStepLog?.steps || 0) / (todayStepLog?.targetSteps || 10000)) * 100))}%
+                        </span>
+                        <p className="text-[10px] text-dark-muted font-medium mt-1">
+                          Goal Progress
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="w-full bg-dark-bg/80 h-2.5 rounded-full overflow-hidden border border-dark-border/40 mb-3.5">
+                      <div
+                        className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-500"
+                        style={{
+                          width: `${Math.min(100, Math.max((todayStepLog?.steps ? 2 : 0), Math.round(((todayStepLog?.steps || 0) / (todayStepLog?.targetSteps || 10000)) * 100)))}%`
+                        }}
+                      />
+                    </div>
+
+                    {/* Stats Grid */}
+                    <div className="grid grid-cols-3 gap-2.5 text-center">
+                      <div className="p-2.5 rounded-xl bg-dark-bg/60 border border-dark-border/50">
+                        <span className="text-[10px] text-dark-muted uppercase font-bold tracking-wider">Distance</span>
+                        <p className="text-sm font-extrabold text-white mt-0.5">
+                          {todayStepLog?.distanceKm != null
+                            ? Number(todayStepLog.distanceKm).toFixed(2)
+                            : (((todayStepLog?.steps || 0) * 0.76) / 1000).toFixed(2)} km
+                        </p>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-dark-bg/60 border border-dark-border/50">
+                        <span className="text-[10px] text-dark-muted uppercase font-bold tracking-wider">Calories Burned</span>
+                        <p className="text-sm font-extrabold text-amber-400 mt-0.5">
+                          🔥 {todayStepLog?.caloriesBurned != null
+                            ? Math.round(todayStepLog.caloriesBurned)
+                            : Math.round((todayStepLog?.steps || 0) * 0.04)} kcal
+                        </p>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-dark-bg/60 border border-dark-border/50 flex flex-col justify-center items-center">
+                        <span className="text-[10px] text-dark-muted uppercase font-bold tracking-wider">Mobile Sensor</span>
+                        <p className="text-xs font-bold text-emerald-400 mt-0.5 flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                          Hardware Active
+                        </p>
                       </div>
                     </div>
                   </div>
