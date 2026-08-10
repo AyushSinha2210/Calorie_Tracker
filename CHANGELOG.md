@@ -288,3 +288,6 @@
 ### 2026-08-10 15:35:10 - style(theme): define glassmorphism card styling and surface elevation
 - Commit #96: Automated milestone tracking and feature verification.
 
+### 2026-08-10 16:48:30 - feat(engine): initialize Cal AI nutrition calculation formulas
+- Commit #97: Automated milestone tracking and feature verification.
+
