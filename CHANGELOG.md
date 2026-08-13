@@ -372,3 +372,6 @@
 ### 2026-08-13 13:08:20 - docs(brand): document typography, macro colors, and visual hierarchy
 - Commit #124: Automated milestone tracking and feature verification.
 
+### 2026-08-13 14:21:45 - feat(brand): add dark mode contrast tokens and emerald accent palette
+- Commit #125: Automated milestone tracking and feature verification.
+
