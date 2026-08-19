@@ -549,3 +549,6 @@
 ### 2026-08-19 11:42:50 - feat(brand): export SVG logo assets for web and mobile platforms
 - Commit #183: Automated milestone tracking and feature verification.
 
+### 2026-08-19 13:08:20 - docs(brand): document typography, macro colors, and visual hierarchy
+- Commit #184: Automated milestone tracking and feature verification.
+
