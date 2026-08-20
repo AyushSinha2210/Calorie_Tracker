@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
-import { addDoc, collection, query, where, orderBy, onSnapshot, deleteDoc, doc, serverTimestamp } from "firebase/firestore";
+import { addDoc, collection, query, where, orderBy, onSnapshot, deleteDoc, doc, serverTimestamp, setDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import { motion } from "framer-motion";
@@ -13,10 +13,11 @@ const labelCls = "block text-xs font-semibold text-surface-500 dark:text-surface
 
 const CATEGORY_COLORS = {
   Abs: "#e74c3c", Arms: "#3498db", Back: "#27ae60", Calves: "#e67e22",
-  Cardio: "#9b59b6", Chest: "#2980b9", Legs: "#f39c12", Shoulders: "#1abc9c", Other: "#95a5a6",
+  Cardio: "#9b59b6", Chest: "#2980b9", Legs: "#f39c12", Shoulders: "#1abc9c", Sports: "#10b981", Other: "#95a5a6",
 };
 
 const INPUT_TYPE_LABELS = {
+  sports: "🏸 Sports / Play",
   cardio: "🏃 Cardio",
   weighted: "🏋️ Weighted",
   bodyweight: "💪 Bodyweight",
@@ -152,6 +153,7 @@ const WorkoutTab = ({ allFoodLogs = [], maintenanceCalories = 0 }) => {
   const canCalculate = useMemo(() => {
     if (!selected || !exerciseInfo || !userWeight) return false;
     switch (inputType) {
+      case "sports": return !!duration;
       case "cardio": return !!duration;
       case "weighted": return !!sets && !!reps && !!liftedWeight;
       case "bodyweight": return !!sets && !!reps;
@@ -173,7 +175,7 @@ const WorkoutTab = ({ allFoodLogs = [], maintenanceCalories = 0 }) => {
           inputType,
           weightKg: Number(userWeight),
         };
-        if (inputType === "cardio") {
+        if (inputType === "sports" || inputType === "cardio") {
           body.durationMin = Number(duration);
         } else if (inputType === "weighted") {
           body.sets = Number(sets);
@@ -313,6 +315,8 @@ const WorkoutTab = ({ allFoodLogs = [], maintenanceCalories = 0 }) => {
     return `${log.durationMin || 0}m`;
   };
 
+
+
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
       {/* ── Search & Log Workout ── */}
@@ -424,6 +428,22 @@ const WorkoutTab = ({ allFoodLogs = [], maintenanceCalories = 0 }) => {
         {/* ── Dynamic Input Fields ── */}
         {selected && exerciseInfo && !loadingInfo && (
           <div className="mt-4">
+            {/* ── Sports inputs: Duration Played ── */}
+            {inputType === "sports" && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+                <div>
+                  <label className={labelCls}>Duration Played (min) *</label>
+                  <input type="number" value={duration} onChange={(e) => setDuration(e.target.value)}
+                    placeholder="e.g. 45 or 60" min="1" max="600" className={inpCls} />
+                </div>
+                <div>
+                  <label className={labelCls}>Your Weight (kg) *</label>
+                  <input type="number" value={userWeight} onChange={(e) => setUserWeight(e.target.value)}
+                    placeholder="e.g. 70" min="20" max="700" step="0.1" className={inpCls} />
+                </div>
+              </div>
+            )}
+
             {/* ── Cardio inputs: Duration + Distance ── */}
             {inputType === "cardio" && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
@@ -605,11 +625,19 @@ const WorkoutTab = ({ allFoodLogs = [], maintenanceCalories = 0 }) => {
                         )}
                         <div>
                           <div style={{ fontWeight: 600 }}>{log.exerciseName}</div>
-                          <span style={{
-                            fontSize: 11, padding: "1px 6px", borderRadius: 8,
-                            background: CATEGORY_COLORS[log.category] ? `${CATEGORY_COLORS[log.category]}15` : "#f0f0f0",
-                            color: CATEGORY_COLORS[log.category] || "#888",
-                          }}>{log.category}</span>
+                          <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 2 }}>
+                            <span style={{
+                              fontSize: 11, padding: "1px 6px", borderRadius: 8,
+                              background: CATEGORY_COLORS[log.category] ? `${CATEGORY_COLORS[log.category]}15` : "#f0f0f0",
+                              color: CATEGORY_COLORS[log.category] || "#888",
+                            }}>{log.category}</span>
+                            {log.source === "gpx" && (
+                              <span style={{
+                                fontSize: 10, padding: "1px 6px", borderRadius: 6,
+                                background: "#06b6d4", color: "#fff", fontWeight: 700
+                              }}>GPX 📍</span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </td>
@@ -673,6 +701,12 @@ const WorkoutTab = ({ allFoodLogs = [], maintenanceCalories = 0 }) => {
                                 background: CATEGORY_COLORS[log.category] ? `${CATEGORY_COLORS[log.category]}15` : "#f0f0f0",
                                 color: CATEGORY_COLORS[log.category] || "#888",
                               }}>{log.category}</span>
+                              {log.source === "gpx" && (
+                                <span style={{
+                                  fontSize: 10, marginLeft: 4, padding: "1px 5px", borderRadius: 6,
+                                  background: "#06b6d4", color: "#fff", fontWeight: 700
+                                }}>GPX 📍</span>
+                              )}
                             </div>
                           </td>
                           <td style={{ textAlign: "center", padding: "6px 8px", color: "var(--text-muted)", fontSize: 12 }}>{formatLogDetail(log)}</td>
