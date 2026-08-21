@@ -606,3 +606,6 @@
 ### 2026-08-21 10:25:10 - feat(web): implement circular CalorieRing with animated progress arc
 - Commit #202: Automated milestone tracking and feature verification.
 
+### 2026-08-21 11:42:50 - feat(web): build macro breakdown cards for protein, carbs, and fats
+- Commit #203: Automated milestone tracking and feature verification.
+
