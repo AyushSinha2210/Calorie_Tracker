@@ -747,3 +747,6 @@
 ### 2026-08-25 19:18:40 - test(engine): add test cases for basal metabolic rate variations
 - Commit #249: Automated milestone tracking and feature verification.
 
+### 2026-08-25 20:32:05 - docs(architecture): document clean architecture and module boundaries
+- Commit #250: Automated milestone tracking and feature verification.
+
