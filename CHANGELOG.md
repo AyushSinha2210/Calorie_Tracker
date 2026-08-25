@@ -741,3 +741,6 @@
 ### 2026-08-25 16:48:30 - feat(engine): initialize Cal AI nutrition calculation formulas
 - Commit #247: Automated milestone tracking and feature verification.
 
+### 2026-08-25 18:05:15 - refactor(engine): standardize Mifflin-St Jeor BMR calculation engine
+- Commit #248: Automated milestone tracking and feature verification.
+
