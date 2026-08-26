@@ -762,3 +762,6 @@
 ### 2026-08-26 13:08:20 - fix(nutrition): resolve portion multiplier rounding in calorie engine
 - Commit #254: Automated milestone tracking and feature verification.
 
+### 2026-08-26 14:21:45 - feat(food): integrate food detection schemas with Gemini vision API
+- Commit #255: Automated milestone tracking and feature verification.
+
