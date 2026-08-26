@@ -771,3 +771,6 @@
 ### 2026-08-26 16:48:30 - test(server): add integration test for meal scan fallback responses
 - Commit #257: Automated milestone tracking and feature verification.
 
+### 2026-08-26 18:05:15 - feat(groq): integrate Groq fallback estimator for natural language meals
+- Commit #258: Automated milestone tracking and feature verification.
+
