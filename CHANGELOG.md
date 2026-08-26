@@ -774,3 +774,6 @@
 ### 2026-08-26 18:05:15 - feat(groq): integrate Groq fallback estimator for natural language meals
 - Commit #258: Automated milestone tracking and feature verification.
 
+### 2026-08-26 19:18:40 - perf(vision): add image dimension normalization before AI submission
+- Commit #259: Automated milestone tracking and feature verification.
+
