@@ -759,3 +759,6 @@
 ### 2026-08-26 11:42:50 - feat(nutrition): add gram multiplier scaling for composite dishes
 - Commit #253: Automated milestone tracking and feature verification.
 
+### 2026-08-26 13:08:20 - fix(nutrition): resolve portion multiplier rounding in calorie engine
+- Commit #254: Automated milestone tracking and feature verification.
+
