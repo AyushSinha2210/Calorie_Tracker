@@ -780,3 +780,6 @@
 ### 2026-08-26 20:32:05 - docs(api): document REST endpoints for workout and meal operations
 - Commit #260: Automated milestone tracking and feature verification.
 
+### 2026-08-27 09:12:35 - feat(web): scaffold responsive Cal AI web dashboard layout
+- Commit #261: Automated milestone tracking and feature verification.
+
