@@ -867,3 +867,6 @@
 ### 2026-08-29 19:18:40 - feat(ui): build MacroProgressBar with animated fill transitions
 - Commit #289: Automated milestone tracking and feature verification.
 
+### 2026-08-29 20:32:05 - feat(scanner): integrate CameraX lifecycle and camera preview provider
+- Commit #290: Automated milestone tracking and feature verification.
+
