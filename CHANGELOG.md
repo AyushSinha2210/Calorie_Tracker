@@ -870,3 +870,6 @@
 ### 2026-08-29 20:32:05 - feat(scanner): integrate CameraX lifecycle and camera preview provider
 - Commit #290: Automated milestone tracking and feature verification.
 
+### 2026-08-30 09:12:35 - feat(scanner): implement animated laser scan sweep across viewfinder
+- Commit #291: Automated milestone tracking and feature verification.
+
