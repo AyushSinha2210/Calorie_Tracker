@@ -8,6 +8,7 @@ import { scheduleUserCleanup, deleteInactiveUsers } from "./services/userCleanup
 import { sendOnDemandReport, sendOnDemandReportWithData, scheduleEmailReports } from "./services/emailReportService.js";
 import { searchExercises, getCategories, getExerciseInfo, calculateCaloriesBurned } from "./services/workoutService.js";
 import { generateCoachComment, generateHeuristicCoachComment, buildPrompt, getPromptTemplates } from "./services/aiCoachService.js";
+import { getStravaAuthUrl, exchangeStravaCode, refreshStravaToken, fetchStravaActivities, mapStravaActivityToWorkout } from "./services/stravaService.js";
 import multer from "multer";
 import { createGzip } from "node:zlib";
 
@@ -362,6 +363,52 @@ app.post("/workout/calculate", (req, res) => {
   } catch (e) {
     console.error("[WORKOUT] Calc failed:", e.message);
     res.status(500).json({ error: "Calorie calculation failed", details: e.message });
+  }
+});
+
+// ── Strava Integration endpoints ──
+
+// GET /strava/auth-url — generate Strava OAuth authorization URL
+app.get("/strava/auth-url", (req, res) => {
+  try {
+    const { redirectUri, state } = req.query;
+    const url = getStravaAuthUrl({ redirectUri, state });
+    res.json({ url });
+  } catch (e) {
+    res.status(500).json({ error: "Failed to generate Strava auth URL", details: e.message });
+  }
+});
+
+// POST /strava/token — exchange authorization code or refresh token
+app.post("/strava/token", async (req, res) => {
+  try {
+    const { code, refreshToken, clientId, clientSecret } = req.body;
+    if (code) {
+      const data = await exchangeStravaCode({ code, clientId, clientSecret });
+      return res.json(data);
+    }
+    if (refreshToken) {
+      const data = await refreshStravaToken({ refreshToken, clientId, clientSecret });
+      return res.json(data);
+    }
+    res.status(400).json({ error: "Either 'code' or 'refreshToken' is required" });
+  } catch (e) {
+    console.error("[STRAVA] Token error:", e.message);
+    res.status(500).json({ error: "Failed to exchange Strava token", details: e.message });
+  }
+});
+
+// POST /strava/sync — fetch recent activities and format as FoodCal workouts
+app.post("/strava/sync", async (req, res) => {
+  try {
+    const { accessToken, weightKg, perPage, after } = req.body;
+    if (!accessToken) return res.status(400).json({ error: "accessToken is required" });
+    const rawActivities = await fetchStravaActivities({ accessToken, perPage: perPage || 30, after });
+    const workouts = rawActivities.map((act) => mapStravaActivityToWorkout(act, Number(weightKg) || 70));
+    res.json({ count: workouts.length, workouts });
+  } catch (e) {
+    console.error("[STRAVA] Sync error:", e.message);
+    res.status(500).json({ error: "Failed to sync Strava activities", details: e.message });
   }
 });
 
