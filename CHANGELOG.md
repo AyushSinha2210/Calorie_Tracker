@@ -912,3 +912,6 @@
 ### 2026-08-31 13:08:20 - feat(workout): add bodyweight calibration and effective duration metrics
 - Commit #304: Automated milestone tracking and feature verification.
 
+### 2026-08-31 14:21:45 - feat(workout): support isometric exercise timers and tension duration
+- Commit #305: Automated milestone tracking and feature verification.
+
