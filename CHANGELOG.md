@@ -924,3 +924,6 @@
 ### 2026-08-31 18:05:15 - feat(sports): add badminton doubles, tennis, and squash MET multipliers
 - Commit #308: Automated milestone tracking and feature verification.
 
+### 2026-08-31 19:18:40 - feat(sports): implement team sports catalog with football and basketball
+- Commit #309: Automated milestone tracking and feature verification.
+
