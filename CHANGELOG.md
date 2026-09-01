@@ -930,3 +930,6 @@
 ### 2026-08-31 20:32:05 - docs(workout): document MET formula references and physiological bases
 - Commit #310: Automated milestone tracking and feature verification.
 
+### 2026-09-01 09:12:35 - feat(android): scaffold native Android project with Jetpack Compose BOM
+- Commit #311: Automated milestone tracking and feature verification.
+
