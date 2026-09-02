@@ -981,3 +981,6 @@
 ### 2026-09-02 16:48:30 - feat(progress): build weight check-in tracker with interactive history
 - Commit #327: Automated milestone tracking and feature verification.
 
+### 2026-09-02 18:05:15 - feat(coach): integrate AI Health Coach with customizable tone presets
+- Commit #328: Automated milestone tracking and feature verification.
+
