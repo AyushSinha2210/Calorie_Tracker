@@ -1035,3 +1035,6 @@
 ### 2026-09-04 14:21:45 - feat(android): configure Firebase Android SDK and Firestore persistence
 - Commit #345: Automated milestone tracking and feature verification.
 
+### 2026-09-04 15:35:10 - feat(theme): implement Material 3 dark theme and FoodCal design tokens
+- Commit #346: Automated milestone tracking and feature verification.
+
