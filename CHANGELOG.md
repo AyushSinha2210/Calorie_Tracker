@@ -1080,3 +1080,6 @@
 ### 2026-09-05 20:32:05 - perf(android): optimize recomposition in Compose dashboard LazyColumn
 - Commit #360: Automated milestone tracking and feature verification.
 
+### 2026-09-06 09:12:35 - feat(workout): expand exercise catalog with cardio and strength movements
+- Commit #361: Automated milestone tracking and feature verification.
+
