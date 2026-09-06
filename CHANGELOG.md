@@ -1107,3 +1107,6 @@
 ### 2026-09-06 19:18:40 - feat(sports): implement team sports catalog with football and basketball
 - Commit #369: Automated milestone tracking and feature verification.
 
+### 2026-09-06 20:32:05 - docs(workout): document MET formula references and physiological bases
+- Commit #370: Automated milestone tracking and feature verification.
+
