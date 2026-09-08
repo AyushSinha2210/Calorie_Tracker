@@ -1164,3 +1164,6 @@
 ### 2026-09-08 18:05:15 - feat(coach): integrate AI Health Coach with customizable tone presets
 - Commit #388: Automated milestone tracking and feature verification.
 
+### 2026-09-08 19:18:40 - test(android): write unit tests for calorie calculations and macro splits
+- Commit #389: Automated milestone tracking and feature verification.
+
