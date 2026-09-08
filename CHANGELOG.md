@@ -1158,3 +1158,6 @@
 ### 2026-09-08 15:35:10 - feat(progress): implement 7-day calorie deficit bar chart with Canvas
 - Commit #386: Automated milestone tracking and feature verification.
 
+### 2026-09-08 16:48:30 - feat(progress): build weight check-in tracker with interactive history
+- Commit #387: Automated milestone tracking and feature verification.
+
