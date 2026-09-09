@@ -35,10 +35,42 @@ const CATEGORY_MET = {
   11: 5.0,   // Chest — bench press, push-ups
   9:  6.0,   // Legs — squats, lunges
   13: 5.0,   // Shoulders — overhead press
+  16: 7.0,   // Sports — badminton, cricket, football, tennis, etc.
 };
 
-// More specific MET overrides for common exercises (by name pattern)
+// More specific MET overrides for common exercises & sports (by name pattern)
 const EXERCISE_MET_OVERRIDES = {
+  // Sports
+  "badminton": 7.0,
+  "badminton singles": 8.0,
+  "badminton doubles": 6.0,
+  "badminton match": 8.5,
+  "cricket": 5.0,
+  "cricket match": 5.5,
+  "batting": 5.0,
+  "bowling": 6.5,
+  "football": 8.5,
+  "soccer": 8.5,
+  "basketball": 8.0,
+  "tennis": 7.3,
+  "table tennis": 4.0,
+  "ping pong": 4.0,
+  "volleyball": 4.5,
+  "beach volleyball": 8.0,
+  "squash": 12.0,
+  "hockey": 8.0,
+  "field hockey": 8.0,
+  "pickleball": 6.0,
+  "padel": 7.0,
+  "rugby": 8.3,
+  "baseball": 5.0,
+  "golf": 4.5,
+  "martial arts": 10.0,
+  "karate": 10.0,
+  "taekwondo": 10.0,
+  "judo": 10.0,
+
+  // Cardio & Gym
   "running": 9.8,
   "jogging": 7.0,
   "cycling": 7.5,
@@ -68,6 +100,127 @@ const EXERCISE_MET_OVERRIDES = {
   "treadmill": 8.0,
   "sprinting": 11.5,
 };
+
+// Curated sports catalog to guarantee immediate search & calculation for sports
+export const SPORTS_CATALOG = [
+  {
+    id: -101,
+    name: "Badminton",
+    category: "Sports",
+    categoryId: 16,
+    inputType: "sports",
+    met: 7.0,
+    image: "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=300&auto=format&fit=crop&q=80",
+  },
+  {
+    id: -102,
+    name: "Badminton (Competitive / Match)",
+    category: "Sports",
+    categoryId: 16,
+    inputType: "sports",
+    met: 8.5,
+    image: "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=300&auto=format&fit=crop&q=80",
+  },
+  {
+    id: -103,
+    name: "Cricket",
+    category: "Sports",
+    categoryId: 16,
+    inputType: "sports",
+    met: 5.0,
+    image: "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=300&auto=format&fit=crop&q=80",
+  },
+  {
+    id: -104,
+    name: "Football / Soccer",
+    category: "Sports",
+    categoryId: 16,
+    inputType: "sports",
+    met: 8.5,
+    image: "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=300&auto=format&fit=crop&q=80",
+  },
+  {
+    id: -105,
+    name: "Basketball",
+    category: "Sports",
+    categoryId: 16,
+    inputType: "sports",
+    met: 8.0,
+    image: "https://images.unsplash.com/photo-1546519638-68e109498ffc?w=300&auto=format&fit=crop&q=80",
+  },
+  {
+    id: -106,
+    name: "Tennis",
+    category: "Sports",
+    categoryId: 16,
+    inputType: "sports",
+    met: 7.3,
+    image: "https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?w=300&auto=format&fit=crop&q=80",
+  },
+  {
+    id: -107,
+    name: "Table Tennis / Ping Pong",
+    category: "Sports",
+    categoryId: 16,
+    inputType: "sports",
+    met: 4.0,
+    image: "https://images.unsplash.com/photo-1534158914592-062992fbe900?w=300&auto=format&fit=crop&q=80",
+  },
+  {
+    id: -108,
+    name: "Volleyball",
+    category: "Sports",
+    categoryId: 16,
+    inputType: "sports",
+    met: 4.5,
+    image: "https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?w=300&auto=format&fit=crop&q=80",
+  },
+  {
+    id: -109,
+    name: "Squash",
+    category: "Sports",
+    categoryId: 16,
+    inputType: "sports",
+    met: 12.0,
+    image: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=300&auto=format&fit=crop&q=80",
+  },
+  {
+    id: -110,
+    name: "Swimming (Laps / Sport)",
+    category: "Sports",
+    categoryId: 16,
+    inputType: "sports",
+    met: 8.0,
+    image: "https://images.unsplash.com/photo-1530549387789-4c1017266635?w=300&auto=format&fit=crop&q=80",
+  },
+  {
+    id: -111,
+    name: "Pickleball",
+    category: "Sports",
+    categoryId: 16,
+    inputType: "sports",
+    met: 6.0,
+    image: "https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?w=300&auto=format&fit=crop&q=80",
+  },
+  {
+    id: -112,
+    name: "Hockey",
+    category: "Sports",
+    categoryId: 16,
+    inputType: "sports",
+    met: 8.0,
+    image: "https://images.unsplash.com/photo-1580748141549-71748dbe0bdc?w=300&auto=format&fit=crop&q=80",
+  },
+  {
+    id: -113,
+    name: "Boxing / Sparring",
+    category: "Sports",
+    categoryId: 16,
+    inputType: "sports",
+    met: 9.0,
+    image: "https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?w=300&auto=format&fit=crop&q=80",
+  },
+];
 
 // ── Category cache ──
 let _categories = null;
@@ -257,6 +410,24 @@ export async function getCategories() {
  * Returns equipment, muscles, category info needed for input-type classification.
  */
 export async function getExerciseInfo(baseId) {
+  if (baseId < 0) {
+    const sport = SPORTS_CATALOG.find((s) => s.id === baseId);
+    if (sport) {
+      return {
+        id: sport.id,
+        name: sport.name,
+        categoryId: sport.categoryId,
+        categoryName: sport.category,
+        equipment: [],
+        muscles: [],
+        musclesSecondary: [],
+        inputType: sport.inputType,
+        image: sport.image,
+        imageThumbnail: sport.image,
+      };
+    }
+  }
+
   if (_exerciseInfoCache.has(baseId)) return _exerciseInfoCache.get(baseId);
 
   const data = await fetchJsonWithTimeout(`${WGER_BASE}/exerciseinfo/${baseId}/?format=json`);
@@ -290,9 +461,14 @@ export async function getExerciseInfo(baseId) {
 
 /**
  * Classify exercise into input type based on name, category, and equipment.
- * @returns {"cardio"|"weighted"|"bodyweight"|"isometric"}
+ * @returns {"sports"|"cardio"|"weighted"|"bodyweight"|"isometric"}
  */
 export function classifyExerciseType(exerciseName, categoryId, equipment = []) {
+  if (categoryId === 16) return "sports";
+  if (/(badminton|cricket|football|soccer|basketball|tennis|table.?tennis|ping.?pong|volleyball|squash|hockey|pickleball|padel|rugby|baseball)/i.test(exerciseName)) {
+    return "sports";
+  }
+
   // 1. Isometric check (by name)
   if (ISOMETRIC_PATTERNS.test(exerciseName)) return "isometric";
 
@@ -310,18 +486,30 @@ export function classifyExerciseType(exerciseName, categoryId, equipment = []) {
 }
 
 /**
- * Search exercises by term using wger's search API.
+ * Search exercises by term using wger's search API + local Sports catalog.
  * Returns top results with id, name, category info.
  */
 export async function searchExercises(term) {
   if (!term || term.trim().length < 2) return [];
+  const needle = normalizeSearchText(term);
+  const matchedSports = SPORTS_CATALOG.filter(s =>
+    normalizeSearchText(s.name).includes(needle) || needle.includes(normalizeSearchText(s.name))
+  ).map(s => ({
+    id: s.id,
+    name: s.name,
+    category: s.category,
+    image: s.image,
+    imageThumbnail: s.image,
+    inputType: s.inputType,
+  }));
+
   try {
     const matches = await fetchTranslationMatches(term, SEARCH_MAX_RESULTS);
-    if (matches.length === 0) return [];
-    return Promise.all(matches.map(mapTranslationMatch));
+    const gymMatches = await Promise.all(matches.map(mapTranslationMatch));
+    return [...matchedSports, ...gymMatches].slice(0, SEARCH_MAX_RESULTS);
   } catch {
-    // Do not fail the whole endpoint due to upstream instability.
-    return [];
+    // If upstream wger is slow or fails, return sports matches cleanly
+    return matchedSports;
   }
 }
 
@@ -355,8 +543,8 @@ function estimateDurationFromReps(sets, reps) {
  * @param {Object} p
  * @param {string}  p.exerciseName
  * @param {number}  p.categoryId       — wger category ID
- * @param {string}  p.inputType        — "cardio"|"weighted"|"bodyweight"|"isometric"
- * @param {number}  [p.durationMin]    — minutes  (cardio)
+ * @param {string}  p.inputType        — "sports"|"cardio"|"weighted"|"bodyweight"|"isometric"
+ * @param {number}  [p.durationMin]    — minutes  (sports, cardio)
  * @param {number}  [p.sets]           — number of sets (weighted/bodyweight)
  * @param {number}  [p.reps]           — reps per set  (weighted/bodyweight)
  * @param {number}  [p.liftedWeight]   — weight lifted in kg (weighted)
@@ -369,6 +557,8 @@ export function calculateCaloriesBurned(p) {
   let effectiveDurationMin;
 
   switch (p.inputType) {
+    case "sports":
+    case "sport":
     case "cardio":
       effectiveDurationMin = p.durationMin || 0;
       break;
@@ -408,7 +598,7 @@ export function calculateCaloriesBurned(p) {
  */
 const CATEGORY_NAMES = {
   10: "Abs", 8: "Arms", 12: "Back", 14: "Calves",
-  15: "Cardio", 11: "Chest", 9: "Legs", 13: "Shoulders",
+  15: "Cardio", 11: "Chest", 9: "Legs", 13: "Shoulders", 16: "Sports",
 };
 
 export function getCategoryName(id) {
