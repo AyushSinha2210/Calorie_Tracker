@@ -1173,3 +1173,6 @@
 ### 2026-09-09 09:12:35 - feat(workout): expand exercise catalog with cardio and strength movements
 - Commit #391: Automated milestone tracking and feature verification.
 
+### 2026-09-09 10:25:10 - feat(workout): implement MET-based calorie burn calculator by weight
+- Commit #392: Automated milestone tracking and feature verification.
+
