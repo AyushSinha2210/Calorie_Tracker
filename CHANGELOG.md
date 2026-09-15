@@ -1359,3 +1359,6 @@
 ### 2026-09-15 11:42:50 - feat(workout): support weighted resistance exercises with sets and reps
 - Commit #453: Automated milestone tracking and feature verification.
 
+### 2026-09-15 13:08:20 - feat(workout): add bodyweight calibration and effective duration metrics
+- Commit #454: Automated milestone tracking and feature verification.
+
