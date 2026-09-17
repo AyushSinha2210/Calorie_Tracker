@@ -1416,3 +1416,6 @@
 ### 2026-09-17 10:25:10 - feat(scanner): build 1-10 Health Score gauge with dynamic color tiers
 - Commit #472: Automated milestone tracking and feature verification.
 
+### 2026-09-17 11:42:50 - feat(scanner): add portion adjustment slider in bottom sheet modal
+- Commit #473: Automated milestone tracking and feature verification.
+
