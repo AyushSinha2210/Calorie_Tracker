@@ -1446,3 +1446,6 @@
 ### 2026-09-18 10:25:10 - feat(workout): implement MET-based calorie burn calculator by weight
 - Commit #482: Automated milestone tracking and feature verification.
 
+### 2026-09-18 11:42:50 - feat(workout): support weighted resistance exercises with sets and reps
+- Commit #483: Automated milestone tracking and feature verification.
+
