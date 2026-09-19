@@ -1,0 +1,36 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Progress Ring "C" -->
+    <path
+        android:strokeColor="#10B981"
+        android:strokeWidth="6"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000"
+        android:pathData="M71,37 A24,24 0 1,0 71,71" />
+    <!-- Tilted central leaf (rotated 28 degrees around center) -->
+    <group
+        android:pivotX="54"
+        android:pivotY="54"
+        android:rotation="28">
+        <path
+            android:fillColor="#34D399"
+            android:pathData="M54,68 C44,63 43,50 54,40 C65,50 64,63 54,68 Z" />
+        <path
+            android:strokeColor="#052E1F"
+            android:strokeWidth="2"
+            android:strokeLineCap="round"
+            android:fillColor="#00000000"
+            android:pathData="M54,64 L54,46" />
+    </group>
+    <!-- Accent lime dot centered in the opening of the C at (78, 54) -->
+    <path
+        android:fillColor="#A3E635"
+        android:pathData="M74,54 A4,4 0 1,0 82,54 A4,4 0 1,0 74,54 Z" />
+    <!-- Crisp white inner core for the dot -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M76.2,54 A1.8,1.8 0 1,0 79.8,54 A1.8,1.8 0 1,0 76.2,54 Z" />
+</vector>

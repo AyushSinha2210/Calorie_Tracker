@@ -1,0 +1,9 @@
+sdk.dir=C\:\\Users\\YOUR_USERNAME\\AppData\\Local\\Android\\Sdk
+foodcalApiBaseUrl=https\://calorie-tracker-k014.onrender.com/
+firebaseApiKey=your_firebase_api_key
+firebaseAppId=your_firebase_app_id
+firebaseMessagingSenderId=your_firebase_messaging_sender_id
+firebaseProjectId=calorie-tracker-c483b
+firebaseStorageBucket=your_firebase_storage_bucket
+firebaseWebClientId=your_google_web_client_id_for_android
+
