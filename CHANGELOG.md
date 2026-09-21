@@ -1545,3 +1545,6 @@
 ### 2026-09-21 14:21:45 - feat(workout): support isometric exercise timers and tension duration
 - Commit #515: Automated milestone tracking and feature verification.
 
+### 2026-09-21 15:35:10 - fix(workout): correct calorie calculation for sub-minute isometric holds
+- Commit #516: Automated milestone tracking and feature verification.
+
