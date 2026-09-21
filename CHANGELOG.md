@@ -1551,3 +1551,6 @@
 ### 2026-09-21 16:48:30 - feat(sports): calibrate metabolic rates for competitive badminton singles
 - Commit #517: Automated milestone tracking and feature verification.
 
+### 2026-09-21 18:05:15 - feat(sports): add badminton doubles, tennis, and squash MET multipliers
+- Commit #518: Automated milestone tracking and feature verification.
+
