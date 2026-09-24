@@ -1638,3 +1638,6 @@
 ### 2026-09-24 15:35:10 - fix(workout): correct calorie calculation for sub-minute isometric holds
 - Commit #546: Automated milestone tracking and feature verification.
 
+### 2026-09-24 16:48:30 - feat(sports): calibrate metabolic rates for competitive badminton singles
+- Commit #547: Automated milestone tracking and feature verification.
+
