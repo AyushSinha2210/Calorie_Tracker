@@ -1845,3 +1845,6 @@
 ### 2026-10-01 14:21:45 - style(steps): make large step count digits clickable with edit badge
 - Commit #615: Automated milestone tracking and feature verification.
 
+### 2026-10-01 15:35:10 - fix(accessibility): increase touch target size for step edit controls
+- Commit #616: Automated milestone tracking and feature verification.
+
