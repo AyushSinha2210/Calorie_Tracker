@@ -1881,3 +1881,6 @@
 ### 2026-10-02 16:48:30 - feat(sync): auto-sync step count to Firestore on application launch
 - Commit #627: Automated milestone tracking and feature verification.
 
+### 2026-10-02 18:05:15 - feat(sync): auto-sync step count to Firestore on activity onResume
+- Commit #628: Automated milestone tracking and feature verification.
+
