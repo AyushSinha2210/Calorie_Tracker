@@ -1902,3 +1902,6 @@
 ### 2026-10-03 13:08:20 - style(steps): enlarge Edit Steps button into prominent cyan pill button
 - Commit #634: Automated milestone tracking and feature verification.
 
+### 2026-10-03 14:21:45 - style(steps): make large step count digits clickable with edit badge
+- Commit #635: Automated milestone tracking and feature verification.
+
