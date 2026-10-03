@@ -1896,3 +1896,6 @@
 ### 2026-10-03 10:25:10 - feat(gpx): compute MET calorie burn for imported outdoor GPX tracks
 - Commit #632: Automated milestone tracking and feature verification.
 
+### 2026-10-03 11:42:50 - refactor(workout): replace proprietary Strava API with free GPX importer
+- Commit #633: Automated milestone tracking and feature verification.
+
