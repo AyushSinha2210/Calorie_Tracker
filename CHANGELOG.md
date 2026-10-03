@@ -1908,3 +1908,6 @@
 ### 2026-10-03 15:35:10 - fix(accessibility): increase touch target size for step edit controls
 - Commit #636: Automated milestone tracking and feature verification.
 
+### 2026-10-03 16:48:30 - chore(clean): clean up deprecated Strava background sync calls
+- Commit #637: Automated milestone tracking and feature verification.
+
