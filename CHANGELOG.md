@@ -1923,3 +1923,6 @@
 ### 2026-10-04 09:12:35 - feat(sensor): implement hardware StepTrackerManager using SensorManager
 - Commit #641: Automated milestone tracking and feature verification.
 
+### 2026-10-04 10:25:10 - feat(sensor): support TYPE_STEP_COUNTER with persistent boot offsets
+- Commit #642: Automated milestone tracking and feature verification.
+
