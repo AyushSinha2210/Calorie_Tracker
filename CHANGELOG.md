@@ -1947,3 +1947,6 @@
 ### 2026-10-04 19:18:40 - feat(gpx): implement standalone GpxParser for GPS track logs
 - Commit #649: Automated milestone tracking and feature verification.
 
+### 2026-10-04 20:32:05 - feat(gpx): parse trackpoints, calculate distance, duration and speed
+- Commit #650: Automated milestone tracking and feature verification.
+
