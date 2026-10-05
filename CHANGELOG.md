@@ -1959,3 +1959,6 @@
 ### 2026-10-05 11:42:50 - refactor(workout): replace proprietary Strava API with free GPX importer
 - Commit #653: Automated milestone tracking and feature verification.
 
+### 2026-10-05 13:08:20 - style(steps): enlarge Edit Steps button into prominent cyan pill button
+- Commit #654: Automated milestone tracking and feature verification.
+
