@@ -1950,3 +1950,6 @@
 ### 2026-10-04 20:32:05 - feat(gpx): parse trackpoints, calculate distance, duration and speed
 - Commit #650: Automated milestone tracking and feature verification.
 
+### 2026-10-05 09:12:35 - feat(gpx): auto-detect activity type (cycling, walking, running, sports)
+- Commit #651: Automated milestone tracking and feature verification.
+
