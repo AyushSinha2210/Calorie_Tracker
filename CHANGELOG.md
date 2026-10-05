@@ -1953,3 +1953,6 @@
 ### 2026-10-05 09:12:35 - feat(gpx): auto-detect activity type (cycling, walking, running, sports)
 - Commit #651: Automated milestone tracking and feature verification.
 
+### 2026-10-05 10:25:10 - feat(gpx): compute MET calorie burn for imported outdoor GPX tracks
+- Commit #652: Automated milestone tracking and feature verification.
+
