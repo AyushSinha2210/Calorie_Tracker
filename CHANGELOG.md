@@ -1998,3 +1998,6 @@
 ### 2026-10-06 15:35:10 - feat(sensor): derive active calories burned from daily walking distance
 - Commit #666: Automated milestone tracking and feature verification.
 
+### 2026-10-06 16:48:30 - feat(sync): auto-sync step count to Firestore on application launch
+- Commit #667: Automated milestone tracking and feature verification.
+
