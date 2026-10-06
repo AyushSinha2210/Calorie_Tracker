@@ -1989,3 +1989,6 @@
 ### 2026-10-06 11:42:50 - feat(sensor): add TYPE_STEP_DETECTOR fallback for legacy device support
 - Commit #663: Automated milestone tracking and feature verification.
 
+### 2026-10-06 13:08:20 - feat(sensor): handle daily midnight rollover and step counter reset
+- Commit #664: Automated milestone tracking and feature verification.
+
