@@ -1986,3 +1986,6 @@
 ### 2026-10-06 10:25:10 - feat(sensor): support TYPE_STEP_COUNTER with persistent boot offsets
 - Commit #662: Automated milestone tracking and feature verification.
 
+### 2026-10-06 11:42:50 - feat(sensor): add TYPE_STEP_DETECTOR fallback for legacy device support
+- Commit #663: Automated milestone tracking and feature verification.
+
