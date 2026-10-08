@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_theme.dart';
+import 'application/goals_controller.dart';
 
-class GoalsPage extends StatelessWidget {
+class GoalsPage extends ConsumerWidget {
   const GoalsPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(goalsControllerProvider);
+
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -14,11 +18,18 @@ class GoalsPage extends StatelessWidget {
         const SizedBox(height: 4),
         const Text('Performance targets and completion progress', style: TextStyle(fontSize: 13, color: AppColors.textMuted)),
         const SizedBox(height: 14),
-        _goal('Weekly Running', 0.72, '25.2 / 35 km'),
-        const SizedBox(height: 10),
-        _goal('Calories Burn', 0.58, '2,320 / 4,000 kcal'),
-        const SizedBox(height: 10),
-        _goal('Strength Sessions', 0.80, '4 / 5 sessions'),
+        if (state.loading && state.items.isEmpty)
+          const Center(child: CircularProgressIndicator()),
+        ...state.items.map(
+          (goal) => Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: _goal(goal.title, goal.progress, goal.meta),
+          ),
+        ),
+        if (!state.loading && state.items.isEmpty)
+          const Text('No goals loaded.'),
+        if (state.error != null)
+          Text(state.error!, style: const TextStyle(color: Colors.redAccent, fontSize: 12)),
       ],
     );
   }

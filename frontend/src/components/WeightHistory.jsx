@@ -68,6 +68,9 @@ const WeightHistory = () => {
         createdAt: serverTimestamp(),
       });
       await setDoc(doc(db, "users", user.uid), {
+        weight: weightKg,
+        originalWeight: val,
+        weightUnit: newUnit,
         lastRecordedWeight: weightKg,
         lastWeightLogDate: newDate,
       }, { merge: true });

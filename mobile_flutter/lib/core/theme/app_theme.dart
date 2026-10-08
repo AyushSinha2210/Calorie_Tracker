@@ -29,7 +29,7 @@ ThemeData buildAppTheme() {
       surface: AppColors.card,
       onSurface: AppColors.text,
     ),
-    cardTheme: const CardTheme(
+    cardTheme: const CardThemeData(
       color: AppColors.card,
       elevation: 0,
       margin: EdgeInsets.zero,

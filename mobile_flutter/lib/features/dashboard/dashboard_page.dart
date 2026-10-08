@@ -1,14 +1,27 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../widgets/stat_tile.dart';
+import 'application/dashboard_controller.dart';
 
-class DashboardPage extends StatelessWidget {
+class DashboardPage extends ConsumerWidget {
   const DashboardPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(dashboardControllerProvider);
+    final data = state.data;
+
+    if (state.loading && data == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (data == null) {
+      return const Center(child: Text('Unable to load dashboard.'));
+    }
+
     return CustomScrollView(
       slivers: [
         SliverAppBar.large(
@@ -26,12 +39,12 @@ class DashboardPage extends StatelessWidget {
                   gradient: const LinearGradient(colors: [Color(0xFFFF6A3D), Color(0xFFFF924E)]),
                   borderRadius: BorderRadius.circular(24),
                 ),
-                child: const Column(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Welcome back, Ayush', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700)),
-                    SizedBox(height: 4),
-                    Text('14 day streak  •  Stay consistent', style: TextStyle(fontSize: 12, color: Colors.white70)),
+                    Text('Welcome back, ${data.userName}', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 4),
+                    Text('${data.streakDays} day streak  •  Stay consistent', style: const TextStyle(fontSize: 12, color: Colors.white70)),
                   ],
                 ),
               ),
@@ -43,11 +56,11 @@ class DashboardPage extends StatelessWidget {
                 mainAxisSpacing: 10,
                 physics: const NeverScrollableScrollPhysics(),
                 childAspectRatio: 1.35,
-                children: const [
-                  StatTile(icon: Icons.local_fire_department, label: 'Calories', value: '684', unit: 'kcal'),
-                  StatTile(icon: Icons.route, label: 'Distance', value: '9.4', unit: 'km'),
-                  StatTile(icon: Icons.timer, label: 'Active', value: '78', unit: 'min'),
-                  StatTile(icon: Icons.water_drop, label: 'Hydration', value: '1900', unit: 'ml'),
+                children: [
+                  StatTile(icon: Icons.local_fire_department, label: 'Calories', value: '${data.calories}', unit: 'kcal'),
+                  StatTile(icon: Icons.route, label: 'Distance', value: data.distanceKm.toStringAsFixed(1), unit: 'km'),
+                  StatTile(icon: Icons.timer, label: 'Active', value: '${data.activeMinutes}', unit: 'min'),
+                  StatTile(icon: Icons.water_drop, label: 'Hydration', value: '${data.hydrationMl}', unit: 'ml'),
                 ],
               ),
               const SizedBox(height: 14),
@@ -77,19 +90,24 @@ class DashboardPage extends StatelessWidget {
                           ),
                         ),
                         barGroups: [
-                          _bar(0, 5.2),
-                          _bar(1, 7.4),
-                          _bar(2, 4.3),
-                          _bar(3, 9.1),
-                          _bar(4, 6.0),
-                          _bar(5, 8.4),
-                          _bar(6, 6.8),
+                          for (var i = 0; i < data.weeklyBurn.length; i++)
+                            _bar(i, data.weeklyBurn[i]),
                         ],
                       ),
                     ),
                   ),
                 ),
               ),
+              if (state.loading)
+                const Padding(
+                  padding: EdgeInsets.only(top: 10),
+                  child: Text('Refreshing data...', style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                ),
+              if (state.error != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 10),
+                  child: Text(state.error!, style: const TextStyle(fontSize: 12, color: Colors.redAccent)),
+                ),
             ]),
           ),
         ),

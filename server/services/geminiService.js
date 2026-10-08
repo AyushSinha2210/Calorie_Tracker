@@ -1,14 +1,15 @@
 import { getCached, setCache } from "../utils/nutritionCache.js";
+import { getVerifiedNutrition } from "../utils/verifiedNutrition.js";
 
 // ── Model definitions with known RPD (Requests Per Day) limits ──
 // Free-tier Gemini: most models get ~1,500 RPD; some flash-lite get more.
 // We set a conservative threshold at 90% of the limit to switch proactively.
 // Models ordered fastest-first: 2.0 lite/flash are ~1-3s, 3.0 lite ~2-4s, 2.5/3.0 "thinking" models are slow (10-30s)
 const MODEL_CONFIG = [
-  { name: "gemini-2.0-flash-lite", rpd: 1500 },
-  { name: "gemini-2.0-flash", rpd: 1500 },
+  { name: "gemini-2.5-flash", rpd: 1500 },
   { name: "gemini-2.5-flash-lite", rpd: 1500 },
-  { name: "gemini-2.5-flash", rpd: 500 },
+  { name: "gemini-3.5-flash-lite", rpd: 1500 },
+  { name: "gemini-3.8-flash", rpd: 1500 },
   { name: "gemini-2.5-pro", rpd: 50 },
 ];
 
@@ -256,13 +257,33 @@ async function tryModels(prompt, genConfig = {}) {
 export async function detectFoodFromImage(imageBase64, mimeType = "image/jpeg") {
   if (!process.env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY not set");
   const promptParts = [
-    { text: `Identify all food items in this image with estimated weight in grams. Return ONLY valid JSON: {"items":[{"name":"food name","grams":100}]}. No markdown.` },
+    {
+      text: `Identify all visible food items in this image. Estimate the expected portion/quantity (e.g. "1 medium banana", "1 bowl rice", "2 chapatis") and estimated weight in grams from visual size.
+Also estimate realistic nutrition (calories, protein, carbs, fat).
+CRITICAL ACCURACY RULE: Fruits (banana, apple, orange, watermelon, mango, etc.) have minimal protein (only 0.2g to 1.2g per 100g). A banana does NOT have high protein.
+Return ONLY valid JSON (no markdown):
+{"items":[{"name":"food name","quantity":"1 medium (120g)","grams":120,"calories":105,"protein":1.3,"carbs":27.0,"fat":0.4}]}`
+    },
     { inlineData: { mimeType, data: imageBase64 } }
   ];
 
   // Use tryModels with multimodal prompt parts
-  const text = await tryModels(promptParts, { maxOutputTokens: 512 });
-  return JSON.parse(cleanJson(text));
+  const text = await tryModels(promptParts, { maxOutputTokens: 600 });
+  const raw = JSON.parse(cleanJson(text));
+  const items = (Array.isArray(raw?.items) ? raw.items : []).map((i) => {
+    const grams = Math.round(clampNum(i.grams, 1, 3000)) || 100;
+    const verified = getVerifiedNutrition(i.name, grams);
+    return {
+      name: verified ? verified.name : (i.name || "Food").trim(),
+      quantity: i.quantity || `${grams}g`,
+      grams,
+      calories: verified ? verified.calories : Math.round(clampNum(i.calories, 0, 5000)),
+      protein: verified ? verified.protein : round1(clampNum(i.protein, 0, 500)),
+      carbs: verified ? verified.carbs : round1(clampNum(i.carbs, 0, 1000)),
+      fat: verified ? verified.fat : round1(clampNum(i.fat, 0, 500)),
+    };
+  });
+  return { items };
 }
 
 export async function detectFoodFromText(text) {
@@ -271,11 +292,76 @@ export async function detectFoodFromText(text) {
   const cached = getCached(cacheKey);
   if (cached) return cached;
 
-  const prompt = `Identify all food items and their quantities/weight in grams from this description. Standard portions: 1 roti=40g, 1 bowl dal=150g, 1 cup rice=200g, 1 egg=50g, 1 chapati=40g, 1 parantha=60g.
+  const prompt = `Identify all food items and their quantities/weight in grams from this description. Standard portions: 1 roti=40g, 1 bowl dal=150g, 1 cup rice=200g, 1 egg=50g, 1 medium banana=118g, 1 chapati=40g, 1 parantha=60g.
 Description: "${text}"
-Return ONLY valid JSON: {"items":[{"name":"food name","grams":100}]}. No markdown.`;
+Return ONLY valid JSON: {"items":[{"name":"food name","quantity":"1 medium","grams":100}]}. No markdown.`;
 
   const result = JSON.parse(cleanJson(await tryModels(prompt, { maxOutputTokens: 512 })));
   setCache(cacheKey, result);
   return result;
+}
+
+// ── Cal AI-style one-shot meal scan ──
+// Single vision call returning items + full macros + health score.
+const clampNum = (v, min, max) => {
+  const n = Number(v);
+  if (!Number.isFinite(n)) return 0;
+  return Math.min(max, Math.max(min, n));
+};
+const round1 = (n) => Math.round(n * 10) / 10;
+
+export function normalizeScanResult(raw) {
+  const items = (Array.isArray(raw?.items) ? raw.items : [])
+    .filter((i) => i && typeof i.name === "string" && i.name.trim())
+    .slice(0, 15)
+    .map((i) => {
+      const grams = Math.round(clampNum(i.grams, 1, 3000)) || 100;
+      const verified = getVerifiedNutrition(i.name, grams);
+
+      // If recognized in our scientific database, use verified macros (especially to correct fruits & staples)
+      const calories = verified ? verified.calories : Math.round(clampNum(i.calories, 0, 5000));
+      let protein = verified ? verified.protein : round1(clampNum(i.protein, 0, 500));
+      const carbs = verified ? verified.carbs : round1(clampNum(i.carbs, 0, 1000));
+      const fat = verified ? verified.fat : round1(clampNum(i.fat, 0, 500));
+
+      return {
+        name: verified ? verified.name : i.name.trim().slice(0, 80),
+        quantity: i.quantity || `${grams}g`,
+        grams,
+        calories,
+        protein,
+        carbs,
+        fat,
+        source: verified ? "verified-database" : "gemini-scan",
+      };
+    });
+  const sum = (k) => round1(items.reduce((s, i) => s + (Number(i[k]) || 0), 0));
+  return {
+    mealName: (typeof raw?.mealName === "string" && raw.mealName.trim().slice(0, 80)) || items.map((i) => i.name).join(", "),
+    items,
+    total_calories: Math.round(sum("calories")),
+    total_protein: sum("protein"),
+    total_carbs: sum("carbs"),
+    total_fat: sum("fat"),
+    healthScore: items.length ? Math.round(clampNum(raw?.healthScore, 1, 10)) || 5 : 0,
+    tip: typeof raw?.tip === "string" ? raw.tip.trim().slice(0, 200) : "",
+  };
+}
+
+export async function scanMealFromImage(imageBase64, mimeType = "image/jpeg") {
+  if (!process.env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY not set");
+  const promptParts = [
+    {
+      text: `You are a nutrition expert. Identify every food item in this photo, estimate its expected portion quantity and weight in grams from visual portion size, and calculate accurate nutrition.
+CRITICAL ACCURACY RULES:
+- FRUITS (banana, apple, orange, mango, watermelon, papaya, grapes, etc.): Fruits consist mostly of water and carbs, with MINIMAL PROTEIN (0.2g to 1.2g per 100g). DO NOT hallucinate 5-10g protein for fruits! A 120g banana has only ~1.3g protein, ~27g carbs, ~0.4g fat, ~105 kcal.
+- Staples & Proteins: Eggs (~6g protein/egg), dal (~6.5g protein/100g cooked), chicken breast (~31g protein/100g cooked), roti (~3.8g protein/roti).
+Return ONLY valid JSON (no markdown) in exactly this shape:
+{"mealName":"short meal name","items":[{"name":"food","quantity":"1 medium","grams":120,"calories":105,"protein":1.3,"carbs":27.0,"fat":0.4}],"healthScore":7,"tip":"one short actionable tip"}
+Rules: calories in kcal, macros in grams, numbers only. healthScore is 1-10 (10 = very healthy, balanced, whole foods). If no food is visible return {"items":[]}.`,
+    },
+    { inlineData: { mimeType, data: imageBase64 } },
+  ];
+  const text = await tryModels(promptParts, { maxOutputTokens: 1200, responseMimeType: "application/json" });
+  return normalizeScanResult(JSON.parse(cleanJson(text)));
 }

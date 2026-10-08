@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../lock/app_lock_controller.dart';
+import 'application/profile_controller.dart';
 
 class ProfilePage extends ConsumerWidget {
   const ProfilePage({super.key});
@@ -67,6 +68,12 @@ class ProfilePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final lock = ref.watch(appLockControllerProvider);
+    final profileState = ref.watch(profileControllerProvider);
+    final profile = profileState.data;
+
+    if (profileState.loading && profile == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -77,20 +84,26 @@ class ProfilePage extends ConsumerWidget {
             borderRadius: BorderRadius.circular(24),
             gradient: const LinearGradient(colors: [Color(0xFFFF6A3D), Color(0xFFFF924E)]),
           ),
-          child: const Column(
+          child: Column(
             children: [
-              CircleAvatar(radius: 34, backgroundColor: Colors.black26, child: Text('A', style: TextStyle(fontSize: 32, fontWeight: FontWeight.w700))),
-              SizedBox(height: 10),
-              Text('Ayush', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700)),
-              SizedBox(height: 2),
-              Text('Intermediate Athlete', style: TextStyle(fontSize: 13, color: Colors.white70)),
+              const CircleAvatar(radius: 34, backgroundColor: Colors.black26, child: Text('A', style: TextStyle(fontSize: 32, fontWeight: FontWeight.w700))),
+              const SizedBox(height: 10),
+              Text(profile?.name ?? 'Athlete', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 2),
+              Text(profile?.level ?? 'Intermediate Athlete', style: const TextStyle(fontSize: 13, color: Colors.white70)),
             ],
           ),
         ),
         const SizedBox(height: 14),
-        const _ProfileSection(title: 'Account', items: ['Profile Settings', 'Connected Devices', 'Notification Preferences']),
+        _ProfileSection(
+          title: 'Account',
+          items: profile?.accountItems ?? const ['Profile Settings', 'Connected Devices', 'Notification Preferences'],
+        ),
         const SizedBox(height: 10),
-        const _ProfileSection(title: 'Privacy & Security', items: ['App Lock', 'Encrypted Sync', 'Sign-in Sessions']),
+        _ProfileSection(
+          title: 'Privacy & Security',
+          items: profile?.securityItems ?? const ['App Lock', 'Encrypted Sync', 'Sign-in Sessions'],
+        ),
         const SizedBox(height: 10),
         Card(
           child: Padding(

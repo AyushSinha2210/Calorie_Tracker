@@ -1,34 +1,32 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
   <head>
     <meta charset="utf-8" />
-    <link rel="icon" href="%PUBLIC_URL%/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" type="image/svg+xml" href="%PUBLIC_URL%/favicon.svg" />
     <link rel="alternate icon" href="%PUBLIC_URL%/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/apple-touch-icon.png" />
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#07090F" />
+    <meta name="color-scheme" content="dark light" />
     <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" />
-    <meta name="author" content="FoodCalo" />
-    <meta name="theme-color" content="#fafaf9" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#0c0a09" media="(prefers-color-scheme: dark)" />
-    <meta name="description" content="FoodCalo is an AI calorie tracker and workout coach that logs meals, tracks protein, and helps health-focused users stay consistent every day." />
+    <meta name="author" content="FoodCal" />
+    <meta name="description" content="FoodCal is an AI calorie tracker and workout coach that logs meals, tracks macros, and helps health-focused users stay consistent every day." />
     <link rel="canonical" href="https://foodcalo.vercel.app/" />
-    <link rel="alternate" href="https://foodcalo.vercel.app/" hreflang="en" />
-    <link rel="alternate" href="https://foodcalo.vercel.app/" hreflang="x-default" />
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="FoodCalo" />
-    <meta property="og:title" content="FoodCalo | AI Calorie Tracker & Workout Coach for Fitness" />
-    <meta property="og:description" content="FoodCalo is an AI calorie tracker and workout coach that logs meals, tracks protein, and helps health-focused users stay consistent every day." />
+    <meta property="og:site_name" content="FoodCal" />
+    <meta property="og:title" content="FoodCal | AI Calorie Tracker & Workout Coach" />
+    <meta property="og:description" content="Snap a photo of your meal for instant calorie & macro breakdown, track workouts, and get daily AI coaching." />
     <meta property="og:url" content="https://foodcalo.vercel.app/" />
-    <meta property="og:image" content="https://foodcalo.vercel.app/og-image.svg" />
-    <meta property="og:image:alt" content="FoodCalo AI calorie tracker and workout coach dashboard preview" />
+    <meta property="og:image" content="%PUBLIC_URL%/og-image.svg" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="FoodCalo | AI Calorie Tracker & Workout Coach for Fitness" />
-    <meta name="twitter:description" content="FoodCalo is an AI calorie tracker and workout coach that logs meals, tracks protein, and helps health-focused users stay consistent every day." />
-    <meta name="twitter:image" content="https://foodcalo.vercel.app/og-image.svg" />
+    <meta name="twitter:title" content="FoodCal | AI Calorie Tracker & Workout Coach" />
+    <meta name="twitter:description" content="FoodCal is an AI calorie tracker and workout coach that logs meals, tracks macros, and helps health-focused users stay consistent every day." />
+    <meta name="twitter:image" content="%PUBLIC_URL%/og-image.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300..900&display=swap" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300..900&display=swap" rel="stylesheet" />
-    <title>FoodCalo | AI Calorie Tracker & Workout Coach for Fitness</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <title>FoodCal | AI Calorie Tracker & Workout Coach</title>
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -37,56 +35,24 @@
             "@type": "WebSite",
             "@id": "https://foodcalo.vercel.app/#website",
             "url": "https://foodcalo.vercel.app/",
-            "name": "FoodCalo",
+            "name": "FoodCal",
             "description": "AI calorie tracker and workout coach for health-focused users.",
             "inLanguage": "en"
           },
           {
-            "@type": "Organization",
-            "@id": "https://foodcalo.vercel.app/#organization",
-            "name": "FoodCalo",
-            "url": "https://foodcalo.vercel.app/",
-            "logo": "https://foodcalo.vercel.app/favicon.svg",
-            "sameAs": [],
-            "description": "FoodCalo is an AI calorie tracker, nutrition log, and workout coach.",
-            "contactPoint": {
-              "@type": "ContactPoint",
-              "contactType": "customer support",
-              "availableLanguage": ["en"]
-            }
-          },
-          {
             "@type": "SoftwareApplication",
-            "name": "FoodCalo",
+            "name": "FoodCal",
             "applicationCategory": "HealthApplication",
             "operatingSystem": "Web",
             "url": "https://foodcalo.vercel.app/",
-            "description": "AI calorie tracker and workout coach that logs meals, tracks workouts, and surfaces nutrition insights.",
-            "offers": {
-              "@type": "Offer",
-              "price": "0",
-              "priceCurrency": "USD"
-            }
-          },
-          {
-            "@type": "WebPage",
-            "@id": "https://foodcalo.vercel.app/#webpage",
-            "url": "https://foodcalo.vercel.app/",
-            "name": "FoodCalo | AI Calorie Tracker & Workout Coach for Fitness",
-            "isPartOf": {
-              "@id": "https://foodcalo.vercel.app/#website"
-            },
-            "about": {
-              "@id": "https://foodcalo.vercel.app/#organization"
-            },
-            "description": "FoodCalo helps users log meals, track calories, monitor protein, and stay consistent with their fitness goals."
+            "description": "AI calorie tracker and workout coach that logs meals, tracks workouts, and surfaces nutrition insights."
           }
         ]
       }
     </script>
   </head>
-  <body>
-    <noscript>You need to enable JavaScript to run this app.</noscript>
+  <body class="bg-[#07090F] text-[#F5F7FA] antialiased selection:bg-emerald-500/30 selection:text-emerald-300">
+    <noscript>You need to enable JavaScript to run FoodCal.</noscript>
     <div id="root"></div>
   </body>
 </html>

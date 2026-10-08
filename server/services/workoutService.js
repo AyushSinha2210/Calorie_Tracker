@@ -373,10 +373,12 @@ export function calculateCaloriesBurned(p) {
       effectiveDurationMin = p.durationMin || 0;
       break;
     case "weighted":
+    case "weight_reps":
     case "bodyweight":
       effectiveDurationMin = estimateDurationFromReps(p.sets || 1, p.reps || 1);
       break;
     case "isometric":
+    case "hold":
       effectiveDurationMin = (p.holdSeconds || 0) / 60;
       break;
     default:
@@ -386,7 +388,7 @@ export function calculateCaloriesBurned(p) {
   let caloriesBurned = Math.round(met * p.weightKg * (effectiveDurationMin / 60));
 
   // Bonus for weighted exercises — heavier load increases energy expenditure
-  if (p.inputType === "weighted" && p.liftedWeight > 0) {
+  if ((p.inputType === "weighted" || p.inputType === "weight_reps") && p.liftedWeight > 0) {
     const volumeBonus = Math.round((p.sets || 1) * (p.reps || 1) * p.liftedWeight * 0.002);
     caloriesBurned += volumeBonus;
   }

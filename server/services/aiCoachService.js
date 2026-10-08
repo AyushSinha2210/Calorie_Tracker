@@ -7,10 +7,11 @@
 const COACH_TIMEOUT_MS = 12_000;
 
 // Models to rotate through (same free-tier Groq models)
+// Models to rotate through (valid Groq models)
 const MODELS = [
-  "llama-3.1-8b-instant",
-  "llama-3.3-70b-versatile",
-  "meta-llama/llama-4-scout-17b-16e-instruct",
+  "openai/gpt-oss-20b",
+  "qwen/qwen3.8-27b",
+  "openai/gpt-oss-120b",
 ];
 
 const modelHealth = {};
@@ -77,7 +78,39 @@ async function callCoachGroq(model, messages, config = {}) {
   return data.choices?.[0]?.message?.content || "";
 }
 
-// Try models with fallback
+// ── Gemini fallback for coach ──
+async function callCoachGemini(messages) {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) throw new Error("GEMINI_API_KEY not set");
+
+  const systemMessage = messages.find(m => m.role === "system")?.content || "";
+  const userMessage = messages.filter(m => m.role !== "system").map(m => m.content).join("\n\n");
+  const prompt = systemMessage ? `${systemMessage}\n\nContext:\n${userMessage}` : userMessage;
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 9000);
+
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.8, maxOutputTokens: 250 },
+      }),
+      signal: controller.signal,
+    });
+    const data = await res.json();
+    const candidate = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (candidate) return candidate.trim();
+    throw new Error(data.error?.message || "Empty response from Gemini");
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+// Try Groq models with fallback
 async function tryCoachModels(messages, config = {}) {
   const available = MODELS.filter(isOk);
   if (!available.length) {
@@ -96,7 +129,80 @@ async function tryCoachModels(messages, config = {}) {
       if (e.isRateLimit) markBad(name);
     }
   }
-  throw lastErr || new Error("All coach models failed");
+  throw lastErr || new Error("All coach Groq models failed");
+}
+
+/**
+ * Intelligent heuristic fallback comment generator.
+ * Guarantees a relevant, tone-matched coach comment even if all remote AI APIs are offline.
+ */
+export function generateHeuristicCoachComment({ tone = "friendly", activityType = "daily", entry = {}, dayStats = {} }) {
+  const cals = Number(dayStats?.totalCalories) || 0;
+  const target = Number(dayStats?.calorieTarget) || 2000;
+  const burned = Number(dayStats?.caloriesBurned) || 0;
+  const protein = Number(dayStats?.totalProtein) || 0;
+  const remaining = target - cals;
+
+  if (activityType === "daily" || activityType === "summary") {
+    if (tone === "strict") {
+      if (remaining < -200) {
+        return `You're over budget by ${Math.abs(remaining)} kcal today. Put down the snacks, drink water, and keep your discipline.`;
+      } else if (remaining >= 0 && remaining <= 300) {
+        return `Right on target for calories today (${cals}/${target} kcal). Keep this exact consistency tomorrow.`;
+      } else {
+        return `You've eaten ${cals} kcal out of your ${target} kcal target. Hit your protein target and don't ruin it tonight.`;
+      }
+    } else if (tone === "sarcastic") {
+      if (remaining < -200) {
+        return `Did someone say calorie deficit? Because your food log certainly didn't. Hope those extra ${Math.abs(remaining)} kcal were delicious!`;
+      } else if (cals === 0) {
+        return `Zero calories logged today. Are you photosynthesizing or just practicing invisible eating?`;
+      } else {
+        return `Look at you tracking your stats! ${cals} kcal consumed, ${burned} kcal burned. The gym deities are mildly impressed.`;
+      }
+    } else if (tone === "motivational") {
+      return `Every single calorie tracked brings you closer to your fitness goals! You're sitting at ${cals} kcal and ${protein}g protein today. Keep that fire burning!`;
+    } else {
+      // friendly
+      if (cals === 0) {
+        return `Welcome to a fresh day! Don't forget to track your meals and stay hydrated today. You've got this!`;
+      } else if (remaining < 0) {
+        return `You've logged ${cals} kcal today. Focus on nutrient-dense foods and good hydration for the rest of the evening!`;
+      } else {
+        return `Great progress today! You're at ${cals} kcal out of ${target} kcal with ${burned} kcal burned. Finish strong!`;
+      }
+    }
+  } else if (activityType === "food") {
+    const foodName = entry?.name || entry?.item || "your meal";
+    const foodCals = entry?.calories || 0;
+    const foodPro = entry?.protein || 0;
+    if (tone === "strict") {
+      return foodPro >= 15
+        ? `Solid protein (${foodPro}g) in ${foodName}. That's the fuel that actually builds muscle.`
+        : `${foodCals} kcal from ${foodName} with only ${foodPro}g protein. Prioritize real protein in your next meal.`;
+    } else if (tone === "sarcastic") {
+      return foodCals > 500
+        ? `${foodName} for ${foodCals} kcal? Hope your taste buds threw a celebration for that one.`
+        : `Logged ${foodName}. Look at you making responsible dietary decisions!`;
+    } else if (tone === "motivational") {
+      return `Every bite is fuel for greatness! ${foodName} delivers ${foodCals} kcal to energize your journey today.`;
+    } else {
+      return `Nice choice logging ${foodName} (${foodCals} kcal, ${foodPro}g protein)! Every step counts toward your goal.`;
+    }
+  } else {
+    // workout
+    const exName = entry?.exerciseName || entry?.name || "your workout";
+    const burnedCals = entry?.caloriesBurned || 0;
+    if (tone === "strict") {
+      return `Logged ${exName} for ${burnedCals} kcal burned. Don't use it as an excuse to overeat later.`;
+    } else if (tone === "sarcastic") {
+      return `Crushed ${exName}! That's ${burnedCals} calories obliterated. Celebrate with a tall glass of water.`;
+    } else if (tone === "motivational") {
+      return `CHAMPION EFFORT! You put in the work on ${exName} and burned ${burnedCals} kcal. You are unstoppable!`;
+    } else {
+      return `Awesome workout! ${exName} burned approximately ${burnedCals} kcal. Keep up the consistent effort!`;
+    }
+  }
 }
 
 // ──────────────────────────────────────────────
@@ -104,43 +210,53 @@ async function tryCoachModels(messages, config = {}) {
 // ──────────────────────────────────────────────
 
 /**
- * Generate an AI coach comment for user's food/workout activity.
+ * Generate an AI coach comment for user's food/workout/daily activity.
  * @param {Object} params
  * @param {string} params.tone - "strict" | "friendly" | "sarcastic" | "motivational"
- * @param {string} params.activityType - "food" | "workout"
+ * @param {string} params.activityType - "food" | "workout" | "daily" | "summary"
  * @param {Object} params.entry - { name, calories, protein, ... } or workout details
  * @param {Object} params.dayStats - { totalCalories, totalProtein, calorieTarget, caloriesBurned, maintenanceCalories }
  * @param {Object} [params.userProfile] - { name, weight, height, age, gender }
  * @returns {Promise<{ comment: string }>}
  */
-export async function generateCoachComment({ tone = "friendly", activityType = "food", entry, dayStats, userProfile }) {
+export async function generateCoachComment({ tone = "friendly", activityType = "daily", entry, dayStats, userProfile }) {
   const tonePrompt = TONE_PROMPTS[tone] || TONE_PROMPTS.friendly;
 
   let userMessage;
-  if (activityType === "food") {
+  if (activityType === "daily" || activityType === "summary") {
+    userMessage = `The user is reviewing today's fitness and nutrition totals:
+- Total calories consumed: ${dayStats?.totalCalories || 0} kcal
+- Daily calorie target: ${dayStats?.calorieTarget || "not set"} kcal
+- Total protein: ${dayStats?.totalProtein || 0}g
+- Calories burned from exercise: ${dayStats?.caloriesBurned || 0} kcal
+- Net calorie balance: ${(dayStats?.totalCalories || 0) - (dayStats?.caloriesBurned || 0)} kcal
+
+${userProfile ? `User info: ${userProfile.name || "User"}, ${userProfile.age || "?"}y, ${userProfile.weight || "?"}kg, Goal: ${userProfile.goal || "fitness"}` : ""}
+
+Give a short (1-3 sentence) summary feedback comment in your character. Consider their calorie deficit/surplus and protein. Don't use hashtags.`;
+  } else if (activityType === "food") {
     userMessage = `The user just logged a food entry:
-- Food: ${entry.name || entry.item || "unknown food"}
-- Calories: ${entry.calories || 0} kcal
-- Protein: ${entry.protein || 0}g
-${entry.quantity ? `- Quantity: ${entry.quantity}` : ""}
-${entry.mealType ? `- Meal type: ${entry.mealType}` : ""}
+- Food: ${entry?.name || entry?.item || "food"}
+- Calories: ${entry?.calories || 0} kcal
+- Protein: ${entry?.protein || 0}g
+${entry?.quantity ? `- Quantity: ${entry.quantity}` : ""}
+${entry?.mealType ? `- Meal type: ${entry.mealType}` : ""}
 
 Today's running totals:
 - Total calories consumed: ${dayStats?.totalCalories || 0} kcal
 - Total protein: ${dayStats?.totalProtein || 0}g
 - Daily calorie target: ${dayStats?.calorieTarget || "not set"}
 - Calories burned today: ${dayStats?.caloriesBurned || 0}
-- Maintenance calories: ${dayStats?.maintenanceCalories || "not set"}
 
-${userProfile ? `User info: ${userProfile.name || "User"}, ${userProfile.age || "?"}y, ${userProfile.weight || "?"}kg, ${userProfile.gender || ""}` : ""}
+${userProfile ? `User info: ${userProfile.name || "User"}, ${userProfile.age || "?"}y, ${userProfile.weight || "?"}kg` : ""}
 
-Give a short (1-3 sentence) comment about this food entry in your character. Consider the day's totals and whether they're on track. Be specific about the food. Don't use hashtags.`;
+Give a short (1-3 sentence) comment about this food entry in your character. Consider the day's totals. Be specific about the food. Don't use hashtags.`;
   } else {
     userMessage = `The user just logged a workout:
-- Exercise: ${entry.exerciseName || entry.name || "unknown"}
-- Calories burned: ${entry.caloriesBurned || 0} kcal
-${entry.durationMin ? `- Duration: ${entry.durationMin} min` : ""}
-${entry.sets ? `- Sets: ${entry.sets}, Reps: ${entry.reps || "?"}` : ""}
+- Exercise: ${entry?.exerciseName || entry?.name || "workout"}
+- Calories burned: ${entry?.caloriesBurned || 0} kcal
+${entry?.durationMin ? `- Duration: ${entry.durationMin} min` : ""}
+${entry?.sets ? `- Sets: ${entry.sets}, Reps: ${entry?.reps || "?"}` : ""}
 
 Today's running totals:
 - Total calories consumed: ${dayStats?.totalCalories || 0} kcal
@@ -155,8 +271,20 @@ Give a short (1-3 sentence) comment about this workout in your character. Be spe
     { role: "user", content: userMessage },
   ];
 
-  const comment = await tryCoachModels(messages, { temperature: 0.85, max_tokens: 200 });
-  return { comment: comment.trim() };
+  try {
+    const comment = await tryCoachModels(messages, { temperature: 0.85, max_tokens: 200 });
+    return { comment: comment.trim() };
+  } catch (err) {
+    console.warn(`[AI COACH] Groq models failed (${err.message}), trying Gemini...`);
+    try {
+      const geminiComment = await callCoachGemini(messages);
+      return { comment: geminiComment };
+    } catch (gErr) {
+      console.warn(`[AI COACH] Gemini fallback failed (${gErr.message}), using heuristic fallback...`);
+      const fallback = generateHeuristicCoachComment({ tone, activityType, entry, dayStats });
+      return { comment: fallback };
+    }
+  }
 }
 
 // ──────────────────────────────────────────────

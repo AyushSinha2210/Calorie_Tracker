@@ -5,8 +5,7 @@ import {
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 
-const MEAL_TYPES = ["Breakfast", "Lunch", "Evening Snacks", "Dinner", "Late Night", "Others"];
-const MEAL_COLORS = { Breakfast: "#FF9800", Lunch: "#4CAF50", "Evening Snacks": "#10b981", Dinner: "#2196F3", "Late Night": "#607D8B", Others: "#795548" };
+import { MEAL_TYPES_WITH_OTHER as MEAL_TYPES, MEAL_COLORS } from "../constants/mealTypes";
 
 const FoodLogEditor = ({ onDataChanged }) => {
   const { user } = useAuth();

@@ -3,9 +3,9 @@ import { getCached, setCache } from "../utils/nutritionCache.js";
 // ── Groq Models with RPD (Requests Per Day) limits ──
 // Free-tier Groq limits vary by model. We track usage and switch proactively.
 const MODEL_CONFIG = [
-  { name: "llama-3.1-8b-instant", rpd: 14400 },
-  { name: "llama-3.3-70b-versatile", rpd: 14400 },
-  { name: "meta-llama/llama-4-scout-17b-16e-instruct", rpd: 14400 },
+  { name: "openai/gpt-oss-20b", rpd: 14400 },
+  { name: "qwen/qwen3.8-27b", rpd: 14400 },
+  { name: "openai/gpt-oss-120b", rpd: 14400 },
 ];
 
 const GROQ_MODELS = MODEL_CONFIG.map(m => m.name);
@@ -224,10 +224,12 @@ async function tryGroqModels(messages, config = {}) {
 
 // ── Public API ──
 
+const round1 = (n) => Math.round((Number(n) || 0) * 10) / 10;
+
 /**
- * Estimate calories and protein for a list of food items using Groq LLMs.
+ * Estimate calories, protein, carbs, and fat for a list of food items using Groq LLMs.
  * @param {Array<{name: string, grams: number}>} items
- * @returns {Promise<{items: Array<{name, grams, calories, protein}>}>}
+ * @returns {Promise<{items: Array<{name, grams, calories, protein, carbs, fat}>}>}
  */
 export async function estimateNutritionWithGroq(items) {
   const itemKey = items.map((i) => `${i.name}:${i.grams}`).join("|");
@@ -235,27 +237,48 @@ export async function estimateNutritionWithGroq(items) {
   const cached = getCached(cacheKey);
   if (cached) return cached;
 
-  const prompt = `You are a nutrition database. For each food item below, provide accurate calories and protein per the given weight. Use Indian food data where applicable.
+  const prompt = `You are a certified nutrition database. For each food item below, calculate scientifically accurate calories, protein, carbs, and fat based on the specified weight.
+
+CRITICAL NUTRITION RULES:
+- FRUITS (banana, apple, orange, mango, watermelon, papaya, guava, etc.): Fruits consist almost entirely of water and carbohydrates. They contain VERY LITTLE PROTEIN (0.2g to 1.2g per 100g). DO NOT hallucinate high protein for fruits!
+  Example: 100g banana = ~89 kcal, 1.1g protein, 22.8g carbs, 0.3g fat.
+  Example: 100g apple = ~52 kcal, 0.3g protein, 13.8g carbs, 0.2g fat.
+- High protein foods: Chicken breast (~31g/100g), boiled eggs (~12.6g/100g), paneer (~18g/100g), lentils/dal (~6.5g/100g cooked).
+- Calculate calories in kcal, protein in grams, carbs in grams, fat in grams.
 
 Food items:
 ${items.map((i) => `- ${i.name}: ${i.grams}g`).join("\n")}
 
-Return ONLY valid JSON, no markdown, no explanation (ensure calories and protein are numbers, not strings):
-{"items":[{"name":"food name","grams":100,"calories":150,"protein":5}]}
+Return ONLY valid JSON (numbers only, no strings for macros, no markdown):
+{"items":[{"name":"food name","grams":100,"calories":89,"protein":1.1,"carbs":22.8,"fat":0.3}]}
 `;
 
   const messages = [
-    { role: "system", content: "You are a precise nutrition calculator. Return only valid JSON." },
+    { role: "system", content: "You are a precise nutrition calculator. Return only valid JSON with accurate scientific macros." },
     { role: "user", content: prompt },
   ];
 
   const text = await tryGroqModels(messages, {
-    max_tokens: 512,
+    max_tokens: 600,
     temperature: 0.1,
     response_format: { type: "json_object" },
   });
 
-  const data = JSON.parse(cleanJson(text));
+  const raw = JSON.parse(cleanJson(text));
+  const rawItems = Array.isArray(raw?.items) ? raw.items : [];
+  const normalizedItems = rawItems.map((item, idx) => {
+    const orig = items[idx] || {};
+    return {
+      name: item.name || orig.name || "Food",
+      grams: Math.round(Number(item.grams) || Number(orig.grams) || 100),
+      calories: Math.round(Number(item.calories) || 0),
+      protein: round1(item.protein),
+      carbs: round1(item.carbs),
+      fat: round1(item.fat),
+    };
+  });
+
+  const data = { items: normalizedItems };
   console.log(`[GROQ] Nutrition result:`, JSON.stringify(data));
   setCache(cacheKey, data);
   return data;
@@ -265,36 +288,58 @@ Return ONLY valid JSON, no markdown, no explanation (ensure calories and protein
  * Full text-based food analysis: detect items + calculate nutrition via Groq.
  * Used as the nutrition calculation step after Gemini detects food names from text.
  * @param {string} text - User's food description
- * @returns {Promise<{items, total_calories, total_protein}>}
+ * @returns {Promise<{items, total_calories, total_protein, total_carbs, total_fat}>}
  */
 export async function analyzeNutritionFromText(text) {
   const cacheKey = `groq:text:${text.toLowerCase().trim()}`;
   const cached = getCached(cacheKey);
   if (cached) return cached;
 
-  const prompt = `You are a nutrition calculator for Indian food. Standard portions: 1 roti=40g, 1 bowl dal=150g, 1 cup rice=200g, 1 egg=50g, 1 chapati=40g, 1 parantha=60g.
+  const prompt = `You are a nutrition calculator for Indian and international foods.
+Standard portions: 1 roti=40g, 1 bowl dal=150g, 1 cup rice=200g, 1 egg=50g, 1 medium banana=118g, 1 medium apple=182g, 1 chapati=40g, 1 parantha=65g.
+
+CRITICAL NUTRITION RULES:
+- FRUITS (banana, apple, orange, mango, etc.) have minimal protein (only 0.2g - 1.2g per 100g). A banana does NOT have 5g protein; 100g banana has only 1.1g protein and 23g carbs!
+- Always provide accurate values for calories (kcal), protein (g), carbs (g), and fat (g).
 
 Analyze this meal: "${text}"
 
-Return ONLY valid JSON (ensure calories and protein are numbers, not strings):
-{"items":[{"name":"food name","quantity":"human readable quantity","calories":150,"protein":5}],"total_calories":150,"total_protein":5}
+Return ONLY valid JSON (numbers for calories/protein/carbs/fat, no markdown):
+{"items":[{"name":"food name","quantity":"1 medium (118g)","grams":118,"calories":105,"protein":1.3,"carbs":27.0,"fat":0.4}],"total_calories":105,"total_protein":1.3,"total_carbs":27.0,"total_fat":0.4}
 `;
 
   const messages = [
-    { role: "system", content: "You are a precise Indian food nutrition calculator. Return only valid JSON." },
+    { role: "system", content: "You are a precise nutrition calculator. Return only valid JSON with accurate macronutrient breakdowns." },
     { role: "user", content: prompt },
   ];
 
-  const result = JSON.parse(
+  const raw = JSON.parse(
     cleanJson(
       await tryGroqModels(messages, {
-        max_tokens: 512,
+        max_tokens: 700,
         temperature: 0.1,
         response_format: { type: "json_object" },
       })
     )
   );
 
+  const rawItems = Array.isArray(raw?.items) ? raw.items : [];
+  const items = rawItems.map((i) => ({
+    name: i.name || "Food",
+    quantity: i.quantity || `${i.grams || 100}g`,
+    grams: Math.round(Number(i.grams) || 100),
+    calories: Math.round(Number(i.calories) || 0),
+    protein: round1(i.protein),
+    carbs: round1(i.carbs),
+    fat: round1(i.fat),
+  }));
+
+  const total_calories = Math.round(items.reduce((s, i) => s + i.calories, 0));
+  const total_protein = round1(items.reduce((s, i) => s + i.protein, 0));
+  const total_carbs = round1(items.reduce((s, i) => s + i.carbs, 0));
+  const total_fat = round1(items.reduce((s, i) => s + i.fat, 0));
+
+  const result = { items, total_calories, total_protein, total_carbs, total_fat };
   setCache(cacheKey, result);
   return result;
 }

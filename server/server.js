@@ -1,13 +1,13 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import { detectFoodFromImage, getGeminiModelStatus } from "./services/geminiService.js";
+import { detectFoodFromImage, getGeminiModelStatus, scanMealFromImage, normalizeScanResult } from "./services/geminiService.js";
 import { estimateNutritionWithGroq, analyzeNutritionFromText, getGroqModelStatus } from "./services/groqService.js";
 import { getNutrition } from "./services/fatsecretService.js";
 import { scheduleUserCleanup, deleteInactiveUsers } from "./services/userCleanupService.js";
 import { sendOnDemandReport, sendOnDemandReportWithData, scheduleEmailReports } from "./services/emailReportService.js";
 import { searchExercises, getCategories, getExerciseInfo, calculateCaloriesBurned } from "./services/workoutService.js";
-import { generateCoachComment, buildPrompt, getPromptTemplates } from "./services/aiCoachService.js";
+import { generateCoachComment, generateHeuristicCoachComment, buildPrompt, getPromptTemplates } from "./services/aiCoachService.js";
 import multer from "multer";
 import { createGzip } from "node:zlib";
 
@@ -18,6 +18,60 @@ app.use(cors({
   allowedHeaders: ["Content-Type", "Authorization", "x-admin-secret"],
   credentials: true,
 }));
+
+// Security Headers Layer (Defense-in-depth protection)
+app.use((req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("X-XSS-Protection", "1; mode=block");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  res.removeHeader("X-Powered-By");
+  next();
+});
+
+// In-Memory Rate Limiting Layer (Prevents brute-force, scraping & quota exhaustion)
+const rateLimitMap = new Map();
+const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
+const MAX_GENERAL_REQUESTS = 120;
+const MAX_AI_SCAN_REQUESTS = 25;
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, entry] of rateLimitMap.entries()) {
+    if (now - entry.startTime > RATE_LIMIT_WINDOW_MS) {
+      rateLimitMap.delete(ip);
+    }
+  }
+}, 30 * 1000); // Clean up every 30s
+
+app.use((req, res, next) => {
+  // Allow health checks unconditionally
+  if (req.path === "/" || req.path === "/health") return next();
+
+  const ip = req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
+  const now = Date.now();
+  let entry = rateLimitMap.get(ip);
+
+  if (!entry || now - entry.startTime > RATE_LIMIT_WINDOW_MS) {
+    entry = { count: 0, scanCount: 0, startTime: now };
+    rateLimitMap.set(ip, entry);
+  }
+
+  entry.count++;
+  if (req.path.includes("scan") || req.path.includes("analyze")) {
+    entry.scanCount++;
+    if (entry.scanCount > MAX_AI_SCAN_REQUESTS) {
+      return res.status(429).json({ error: "Too many scanning requests. Please wait a minute before scanning again." });
+    }
+  }
+
+  if (entry.count > MAX_GENERAL_REQUESTS) {
+    return res.status(429).json({ error: "Rate limit exceeded. Please wait a minute and try again." });
+  }
+
+  next();
+});
 
 // Lightweight compression middleware (no extra dependency)
 app.use((req, res, next) => {
@@ -42,6 +96,16 @@ const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (req, file, cb) => file.mimetype.startsWith('image/') ? cb(null, true) : cb(new Error('Only images allowed'), false)
+});
+
+// Health check endpoint for uptime monitors and hosting platforms (UptimeRobot, Render, Koyeb, Railway)
+app.get(["/", "/health"], (req, res) => {
+  res.json({
+    status: "ok",
+    service: "FoodCal Backend API",
+    uptime: Math.floor(process.uptime()),
+    timestamp: new Date().toISOString()
+  });
 });
 
 app.post("/analyze-food", async (req, res) => {
@@ -81,40 +145,93 @@ app.post("/analyze-food-image", (req, res, next) => {
   }
 });
 
+// POST /scan-meal — Cal AI-style one-shot scan: items + calories/protein/carbs/fat + health score
+app.post("/scan-meal", (req, res, next) => {
+  upload.single('image')(req, res, (err) => {
+    if (err) {
+      if (err.code === 'LIMIT_FILE_SIZE') return res.status(413).json({ error: "File too large (max 10MB)" });
+      return res.status(400).json({ error: err.message || "Invalid file upload" });
+    }
+    next();
+  });
+}, async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: "No image file provided" });
+  const b64 = req.file.buffer.toString('base64');
+  try {
+    const result = await scanMealFromImage(b64, req.file.mimetype);
+    if (!result.items.length) return res.json({ ...result, note: "No food detected. Try a clearer, closer photo." });
+    res.json(result);
+  } catch (e) {
+    if (e.isQuotaError) return res.status(429).json({ error: e.message });
+    // Fallback: legacy detect → FatSecret/Groq pipeline (calories + protein only)
+    try {
+      const detected = await detectFoodFromImage(b64, req.file.mimetype);
+      if (!detected.items?.length) return res.json(normalizeScanResult({ items: [] }));
+      const items = await calculateItemsNutrition(detected.items.map(i => ({ name: i.name, grams: i.grams })));
+      res.json({ ...normalizeScanResult({ items }), healthScore: 0, fallback: true });
+    } catch (e2) {
+      if (e2.isQuotaError) return res.status(429).json({ error: e2.message });
+      res.status(500).json({ error: "Failed to scan meal", details: e2.message });
+    }
+  }
+});
+
+async function calculateItemsNutrition(items) {
+  const round1 = (n) => Math.round((Number(n) || 0) * 10) / 10;
+  const lookupResults = await Promise.allSettled(
+    items.map(async (item) => {
+      const grams = item.grams || Number.parseInt(item.quantity) || 100;
+      const nutrition = await getNutrition(item.name, grams);
+      return nutrition ? { ...nutrition, _found: true } : { name: item.name, grams, _found: false };
+    })
+  );
+  const results = lookupResults.map((r) => r.status === "fulfilled" ? r.value : { name: "unknown", grams: 100, _found: false });
+  const failedItems = results.map((r, i) => (!r._found ? { name: r.name, grams: r.grams, index: i } : null)).filter(Boolean);
+  if (failedItems.length) {
+    const groqResult = await estimateNutritionWithGroq(failedItems);
+    failedItems.forEach((fi, idx) => {
+      const gi = groqResult?.items?.[idx] || groqResult?.items?.find(g => g.name.toLowerCase().includes(fi.name.toLowerCase().split(' ')[0]));
+      results[fi.index] = {
+        name: fi.name,
+        grams: fi.grams,
+        calories: gi?.calories || 0,
+        protein: round1(gi?.protein),
+        carbs: round1(gi?.carbs),
+        fat: round1(gi?.fat),
+        source: gi ? 'groq' : 'unknown'
+      };
+    });
+  }
+  return results.map(i => ({
+    name: i.name,
+    quantity: `${i.grams}g`,
+    grams: i.grams,
+    calories: i.calories || 0,
+    protein: round1(i.protein),
+    carbs: round1(i.carbs),
+    fat: round1(i.fat),
+    source: i.source || 'unknown'
+  }));
+}
+
 app.post("/calculate-nutrition", async (req, res) => {
   try {
     const { items } = req.body;
     if (!items?.length) return res.status(400).json({ error: "No food items provided" });
 
-    // Parallel lookups — all items fetched concurrently
-    const lookupResults = await Promise.allSettled(
-      items.map(async (item) => {
-        const grams = item.grams || Number.parseInt(item.quantity) || 100;
-        const nutrition = await getNutrition(item.name, grams);
-        return nutrition ? { ...nutrition, _found: true } : { name: item.name, grams, _found: false };
-      })
-    );
+    const finalItems = await calculateItemsNutrition(items);
+    const round1 = (n) => Math.round((Number(n) || 0) * 10) / 10;
 
-    const results = lookupResults.map((r) =>
-      r.status === "fulfilled" ? r.value : { name: "unknown", grams: 100, _found: false }
-    );
-
-    // Batch-send failed items to Groq in one call
-    const failedItems = results
-      .map((r, i) => (!r._found ? { name: r.name, grams: r.grams, index: i } : null))
-      .filter(Boolean);
-
-    if (failedItems.length) {
-      const groqResult = await estimateNutritionWithGroq(failedItems);
-      for (const fi of failedItems) {
-        const gi = groqResult?.items?.[failedItems.indexOf(fi)] || groqResult?.items?.find(g => g.name.toLowerCase().includes(fi.name.toLowerCase().split(' ')[0]));
-        results[fi.index] = { name: fi.name, grams: fi.grams, calories: gi?.calories || 0, protein: gi?.protein || 0, source: gi ? 'groq' : 'unknown' };
-      }
-    }
-
-    const finalItems = results.map(i => ({ name: i.name, quantity: `${i.grams}g`, grams: i.grams, calories: i.calories || 0, protein: i.protein || 0, source: i.source || 'unknown' }));
-    res.json({ items: finalItems, total_calories: finalItems.reduce((s, i) => s + i.calories, 0), total_protein: finalItems.reduce((s, i) => s + i.protein, 0) });
-  } catch (e) { res.status(500).json({ error: "Failed to calculate nutrition", details: e.message }); }
+    res.json({
+      items: finalItems,
+      total_calories: Math.round(finalItems.reduce((s, i) => s + (i.calories || 0), 0)),
+      total_protein: round1(finalItems.reduce((s, i) => s + (i.protein || 0), 0)),
+      total_carbs: round1(finalItems.reduce((s, i) => s + (i.carbs || 0), 0)),
+      total_fat: round1(finalItems.reduce((s, i) => s + (i.fat || 0), 0)),
+    });
+  } catch (e) {
+    res.status(500).json({ error: "Failed to calculate nutrition", details: e.message });
+  }
 });
 
 app.post("/lookup-food", async (req, res) => {
@@ -122,11 +239,27 @@ app.post("/lookup-food", async (req, res) => {
     const { name, quantity } = req.body;
     if (!name) return res.status(400).json({ error: "Food name is required" });
     let grams = 100;
-    if (quantity) { const m = quantity.match(/(\d+(?:\.\d+)?)\s*g/i); if (m) grams = Number.parseFloat(m[1]); }
+    if (quantity) {
+      const m = quantity.match(/(\d+(?:\.\d+)?)\s*g/i);
+      if (m) grams = Number.parseFloat(m[1]);
+    }
     const result = await getNutrition(name, grams);
-    if (result) return res.json({ name: result.name, quantity: `${grams}g`, grams, calories: result.calories, protein: result.protein });
+    if (result) {
+      return res.json({
+        name: result.name,
+        quantity: `${grams}g`,
+        grams,
+        calories: result.calories,
+        protein: result.protein,
+        carbs: result.carbs ?? 0,
+        fat: result.fat ?? 0,
+        source: result.source || "unknown",
+      });
+    }
     res.status(404).json({ error: "Food not found" });
-  } catch (e) { res.status(500).json({ error: "Failed to lookup food", details: e.message }); }
+  } catch (e) {
+    res.status(500).json({ error: "Failed to lookup food", details: e.message });
+  }
 });
 
 const PORT = process.env.PORT || 5000;
@@ -234,16 +367,21 @@ app.post("/workout/calculate", (req, res) => {
 
 // ── AI Coach endpoints ──
 
-// POST /ai-coach/comment — get an AI comment on a food/workout entry
+// POST /ai-coach/comment — get an AI comment on a food/workout/daily summary entry
 app.post("/ai-coach/comment", async (req, res) => {
   try {
     const { tone, activityType, entry, dayStats, userProfile } = req.body;
-    if (!entry) return res.status(400).json({ error: "entry is required" });
-    const result = await generateCoachComment({ tone, activityType, entry, dayStats, userProfile });
+    const result = await generateCoachComment({ tone, activityType: activityType || "daily", entry: entry || {}, dayStats, userProfile });
     res.json(result);
   } catch (e) {
     console.error("[AI COACH] Comment failed:", e.message);
-    res.json({ comment: "Coach is taking a break! Try again in a moment. 💪", error: true });
+    const fallback = generateHeuristicCoachComment({
+      tone: req.body?.tone,
+      activityType: req.body?.activityType || "daily",
+      entry: req.body?.entry || {},
+      dayStats: req.body?.dayStats || {},
+    });
+    res.json({ comment: fallback, fallback: true });
   }
 });
 

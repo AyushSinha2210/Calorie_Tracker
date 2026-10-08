@@ -11,7 +11,7 @@ import Dashboard from './Pages/Dashboard';
 import ProfileSetup from './Pages/ProfileSetup';
 import Profile from './Pages/Profile';
 import ProtectedRoute from './components/ProtectedRoute';
-import BrandLogo from './components/BrandLogo';
+import BrandLogo from './components/ui/BrandLogo';
 
 /* ─── Animation helpers ───────────────────────────────────────── */
 const stagger  = { hidden: {}, visible: { transition: { staggerChildren: 0.1 } } };
@@ -204,9 +204,7 @@ const Home = () => {
 
       {/* ── Nav ── */}
       <nav className="relative z-10 flex items-center justify-between px-6 md:px-10 py-5 max-w-6xl mx-auto">
-        <div className="flex items-center gap-2.5">
-          <BrandLogo />
-        </div>
+        <BrandLogo size="md" to="/" />
         <div className="flex items-center gap-3">
           <Link to="/login" className="text-sm font-medium text-surface-600 dark:text-surface-400 hover:text-surface-900 dark:hover:text-white transition-colors">
             Sign in
