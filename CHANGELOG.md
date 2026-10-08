@@ -2052,3 +2052,6 @@
 ### 2026-10-08 13:08:20 - feat(sensor): handle daily midnight rollover and step counter reset
 - Commit #684: Automated milestone tracking and feature verification.
 
+### 2026-10-08 14:21:45 - feat(sensor): calculate walking distance in km based on step cadence
+- Commit #685: Automated milestone tracking and feature verification.
+
