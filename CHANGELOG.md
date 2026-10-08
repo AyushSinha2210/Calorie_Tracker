@@ -2040,3 +2040,6 @@
 ### 2026-10-07 20:32:05 - feat(release): assemble and package production FoodCal.apk build
 - Commit #680: Automated milestone tracking and feature verification.
 
+### 2026-10-08 09:12:35 - feat(sensor): implement hardware StepTrackerManager using SensorManager
+- Commit #681: Automated milestone tracking and feature verification.
+
