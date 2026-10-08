@@ -1,4 +1,5 @@
 import { getCached, setCache } from "../utils/nutritionCache.js";
+import { getVerifiedNutrition } from "../utils/verifiedNutrition.js";
 
 // ── Groq Models with RPD (Requests Per Day) limits ──
 // Free-tier Groq limits vary by model. We track usage and switch proactively.
@@ -268,9 +269,21 @@ Return ONLY valid JSON (numbers only, no strings for macros, no markdown):
   const rawItems = Array.isArray(raw?.items) ? raw.items : [];
   const normalizedItems = rawItems.map((item, idx) => {
     const orig = items[idx] || {};
+    const grams = Math.round(Number(item.grams) || Number(orig.grams) || 100);
+    const verified = getVerifiedNutrition(item.name || orig.name, grams);
+    if (verified) {
+      return {
+        name: verified.name,
+        grams: verified.grams,
+        calories: verified.calories,
+        protein: verified.protein,
+        carbs: verified.carbs,
+        fat: verified.fat,
+      };
+    }
     return {
       name: item.name || orig.name || "Food",
-      grams: Math.round(Number(item.grams) || Number(orig.grams) || 100),
+      grams,
       calories: Math.round(Number(item.calories) || 0),
       protein: round1(item.protein),
       carbs: round1(item.carbs),
@@ -295,21 +308,32 @@ export async function analyzeNutritionFromText(text) {
   const cached = getCached(cacheKey);
   if (cached) return cached;
 
-  const prompt = `You are a nutrition calculator for Indian and international foods.
-Standard portions: 1 roti=40g, 1 bowl dal=150g, 1 cup rice=200g, 1 egg=50g, 1 medium banana=118g, 1 medium apple=182g, 1 chapati=40g, 1 parantha=65g.
+  const prompt = `You are a certified nutrition calculator for Indian and international foods.
+Standard portions & references:
+- 1 poori = 35g (~135 kcal, 2.5g protein, 16g carbs, 7g fat - deep fried wheat dough). Example: 7 pooris = 245g (~945 kcal, 17.5g protein, 112g carbs, 49g fat).
+- 100g cooked chickpeas/chana/chole = 100g (~164 kcal, 8.9g protein, 27.4g carbs, 2.6g fat).
+- 1 roti/chapati = 40g (~104 kcal, 3.1g protein, 20g carbs, 1.5g fat).
+- 1 bhatura = 90g (~290 kcal, 6g protein, 38g carbs, 13g fat).
+- 1 naan = 90g (~260 kcal, 7.5g protein, 45g carbs, 5g fat).
+- 1 bowl dal = 150g (~105 kcal, 6.5g protein).
+- 1 cup cooked rice = 150g (~195 kcal, 4g protein).
+- 1 large egg = 50g (~78 kcal, 6.3g protein, 5.3g fat).
+- 1 medium banana = 118g (~105 kcal, 1.3g protein, 27g carbs, 0.3g fat).
+- 1 medium apple = 182g (~95 kcal, 0.5g protein, 25g carbs, 0.3g fat).
 
 CRITICAL NUTRITION RULES:
-- FRUITS (banana, apple, orange, mango, etc.) have minimal protein (only 0.2g - 1.2g per 100g). A banana does NOT have 5g protein; 100g banana has only 1.1g protein and 23g carbs!
-- Always provide accurate values for calories (kcal), protein (g), carbs (g), and fat (g).
+1. MULTIPLY BY EXACT COUNT: If the user inputs "7 poori", you MUST calculate for all 7 pooris (7 × 135 = 945 kcal, 7 × 2.5g = 17.5g protein)! Never return only 1 single unit when multiple items are requested!
+2. EXACT GRAM WEIGHT: If the user specifies grams (e.g., "100 gm chickpea"), calculate for that exact gram weight (100g cooked chickpea = 164 kcal, 8.9g protein).
+3. FRUITS: Minimal protein (0.2g to 1.2g per 100g). DO NOT hallucinate high protein for fruits.
 
 Analyze this meal: "${text}"
 
 Return ONLY valid JSON (numbers for calories/protein/carbs/fat, no markdown):
-{"items":[{"name":"food name","quantity":"1 medium (118g)","grams":118,"calories":105,"protein":1.3,"carbs":27.0,"fat":0.4}],"total_calories":105,"total_protein":1.3,"total_carbs":27.0,"total_fat":0.4}
+{"items":[{"name":"food name","quantity":"7 pieces (245g)","grams":245,"calories":945,"protein":17.5,"carbs":112.0,"fat":49.0}],"total_calories":945,"total_protein":17.5,"total_carbs":112.0,"total_fat":49.0}
 `;
 
   const messages = [
-    { role: "system", content: "You are a precise nutrition calculator. Return only valid JSON with accurate macronutrient breakdowns." },
+    { role: "system", content: "You are a precise nutrition calculator. Return only valid JSON with accurate macronutrient breakdowns and accurate count multipliers." },
     { role: "user", content: prompt },
   ];
 
@@ -324,15 +348,30 @@ Return ONLY valid JSON (numbers for calories/protein/carbs/fat, no markdown):
   );
 
   const rawItems = Array.isArray(raw?.items) ? raw.items : [];
-  const items = rawItems.map((i) => ({
-    name: i.name || "Food",
-    quantity: i.quantity || `${i.grams || 100}g`,
-    grams: Math.round(Number(i.grams) || 100),
-    calories: Math.round(Number(i.calories) || 0),
-    protein: round1(i.protein),
-    carbs: round1(i.carbs),
-    fat: round1(i.fat),
-  }));
+  const items = rawItems.map((i) => {
+    const grams = Math.round(Number(i.grams) || 100);
+    const verified = getVerifiedNutrition(i.name, grams);
+    if (verified) {
+      return {
+        name: verified.name,
+        quantity: i.quantity || `${grams}g`,
+        grams: verified.grams,
+        calories: verified.calories,
+        protein: verified.protein,
+        carbs: verified.carbs,
+        fat: verified.fat,
+      };
+    }
+    return {
+      name: i.name || "Food",
+      quantity: i.quantity || `${grams}g`,
+      grams,
+      calories: Math.round(Number(i.calories) || 0),
+      protein: round1(i.protein),
+      carbs: round1(i.carbs),
+      fat: round1(i.fat),
+    };
+  });
 
   const total_calories = Math.round(items.reduce((s, i) => s + i.calories, 0));
   const total_protein = round1(items.reduce((s, i) => s + i.protein, 0));
