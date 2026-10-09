@@ -332,7 +332,8 @@ fun HomeScreen(
 
                 GlassCard(
                     modifier = Modifier.fillMaxWidth(),
-                    borderColor = Color(0xFF06B6D4).copy(alpha = 0.4f)
+                    borderColor = Color(0xFF06B6D4).copy(alpha = 0.4f),
+                    onClick = { showEditStepsDialog = true }
                 ) {
                     Column(
                         modifier = Modifier.fillMaxWidth(),
@@ -355,32 +356,16 @@ fun HomeScreen(
                                 }
                                 Column {
                                     Text("Daily Steps Walked", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), color = Color.White)
-                                    Text("${viewModel.getSensorTypeDescription()} • Auto-sync on open", style = MaterialTheme.typography.labelSmall, color = ColorDarkMuted)
+                                    Text("${viewModel.getSensorTypeDescription()} • Tap anywhere to edit", style = MaterialTheme.typography.labelSmall, color = ColorDarkMuted)
                                 }
                             }
 
-                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .background(Color(0xFF06B6D4).copy(alpha = 0.18f))
-                                        .border(1.dp, Color(0xFF06B6D4).copy(alpha = 0.45f), RoundedCornerShape(12.dp))
-                                        .clickable { showEditStepsDialog = true }
-                                        .padding(horizontal = 12.dp, vertical = 7.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                        Icon(Icons.Default.Edit, contentDescription = "Edit Steps", tint = Color(0xFF06B6D4), modifier = Modifier.size(18.dp))
-                                        Text("Edit Steps", color = Color(0xFF06B6D4), fontWeight = FontWeight.ExtraBold, style = MaterialTheme.typography.labelMedium)
-                                    }
-                                }
-                                IconButton(
-                                    onClick = { viewModel.syncSteps() },
-                                    modifier = Modifier.size(36.dp)
-                                ) {
-                                    Icon(Icons.Default.Sync, contentDescription = "Sync Steps", tint = Color(0xFF06B6D4), modifier = Modifier.size(20.dp))
-                                }
-                            }
+                            Icon(
+                                Icons.Default.Edit,
+                                contentDescription = null,
+                                tint = Color(0xFF06B6D4).copy(alpha = 0.6f),
+                                modifier = Modifier.size(18.dp)
+                            )
                         }
 
                         // Steps Progress Indicator
@@ -389,28 +374,12 @@ fun HomeScreen(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.Bottom
                         ) {
-                            Column(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(10.dp))
-                                    .clickable { showEditStepsDialog = true }
-                                    .padding(vertical = 2.dp)
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    Text(
-                                        text = String.format(java.util.Locale.US, "%,d", todaySteps),
-                                        style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Black),
-                                        color = Color.White
-                                    )
-                                    Box(
-                                        modifier = Modifier
-                                            .size(28.dp)
-                                            .clip(CircleShape)
-                                            .background(Color(0xFF06B6D4).copy(alpha = 0.2f)),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(Icons.Default.Edit, contentDescription = "Edit Steps", tint = Color(0xFF06B6D4), modifier = Modifier.size(16.dp))
-                                    }
-                                }
+                            Column {
+                                Text(
+                                    text = String.format(java.util.Locale.US, "%,d", todaySteps),
+                                    style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Black),
+                                    color = Color.White
+                                )
                                 Text(
                                     text = "Goal: ${String.format(java.util.Locale.US, "%,d", stepTarget)} steps (${(progress * 100).toInt()}%)",
                                     style = MaterialTheme.typography.bodySmall,
@@ -761,8 +730,18 @@ fun HomeScreen(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showEditStepsDialog = false }) {
-                    Text("Cancel", color = ColorDarkMuted)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    TextButton(onClick = {
+                        viewModel.syncSteps()
+                        showEditStepsDialog = false
+                    }) {
+                        Icon(Icons.Default.Sync, contentDescription = null, tint = Color(0xFF06B6D4), modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Sync Sensor", color = Color(0xFF06B6D4))
+                    }
+                    TextButton(onClick = { showEditStepsDialog = false }) {
+                        Text("Cancel", color = ColorDarkMuted)
+                    }
                 }
             }
         )
