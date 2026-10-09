@@ -40,3 +40,10 @@ temp/
 tmp/
 *.apk
 /FoodCal*.apk
+
+# Legacy experiment folders
+Calorie_Tracker/
+flutter/
+mobile/
+mobile_flutter/
+
